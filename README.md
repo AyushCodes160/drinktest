@@ -11,7 +11,8 @@ npm run build    # production build in dist/
 ## Customize
 - **Brand name, photos, ingredients, reviews:** `src/config.js`
 - **Colors & font:** `@theme` block in `src/index.css` (`--color-accent` is the neon CTA color)
-- **3D bottle:** `src/components/BottleScene.jsx` (profile points, materials, lighting)
+- **3D models:** `src/three/products.jsx` (bottle, textured can, generated GLB); lighting in `src/three/Studio.jsx`
+- **Reveal animation:** `BEATS` in `src/three/RevealScene.jsx` sets when the split and liquid happen; particle look in `src/three/LiquidTorrent.jsx`
 - **Waitlist form:** replace `joinWaitlist()` in `src/components/FinalCTA.jsx` with your email provider
 
 ## Before launch

@@ -1,25 +1,35 @@
 import { MotionConfig } from 'framer-motion';
 import Navbar from './components/Navbar';
+import ScrollProgress from './components/ScrollProgress';
 import Hero from './components/Hero';
+import Reveal from './components/Reveal';
+import ScrollBand from './components/ScrollBand';
 import NutritionBento from './components/NutritionBento';
 import Ingredients from './components/Ingredients';
 import Reviews from './components/Reviews';
 import FinalCTA from './components/FinalCTA';
 import Footer from './components/Footer';
+import useSmoothScroll from './hooks/useSmoothScroll';
 
 export default function App() {
+  useSmoothScroll();
+
   return (
     // "user" respects the OS reduced-motion setting for every Framer Motion animation.
     <MotionConfig reducedMotion="user">
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-ink">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-ink">
         Skip to content
       </a>
+      <ScrollProgress />
       <Navbar />
       <main id="main">
         <div id="top" />
         <Hero />
+        <Reveal />
+        <ScrollBand words={['Complete nutrition', 'Zero friction']} />
         <NutritionBento />
         <Ingredients />
+        <ScrollBand words={['One bottle', 'Every nutrient']} />
         <Reviews />
         <FinalCTA />
       </main>

@@ -1,12 +1,12 @@
 import { Suspense, lazy, useRef, useState } from 'react';
-import { motion, useInView, useReducedMotion } from 'framer-motion';
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Play } from 'lucide-react';
 import Button from './ui/Button';
 import useMediaQuery, { hasWebGL } from '../hooks/useMediaQuery';
 import { PHOTOS, unsplash, unsplashSrcSet } from '../config';
 
 // The 3D stack (three.js + R3F) is split into its own chunk and loaded after first paint.
-const BottleScene = lazy(() => import('./BottleScene'));
+const HeroScene = lazy(() => import('../three/HeroScene'));
 
 // Optional ?model=bottle|textured-can|generated override, handy for comparing hero models.
 const MODEL_OVERRIDE = new URLSearchParams(window.location.search).get('model') ?? undefined;
@@ -34,6 +34,7 @@ function BottleFallback() {
 }
 
 export default function Hero() {
+  const sectionRef = useRef(null);
   const sceneRef = useRef(null);
   const inView = useInView(sceneRef, { margin: '0px 0px -10% 0px' });
   const reduceMotion = useReducedMotion();
@@ -42,10 +43,19 @@ export default function Hero() {
 
   const frameloop = !inView ? 'never' : reduceMotion ? 'demand' : 'always';
 
+  // Parallax as the hero scrolls away: copy drifts up and fades, backdrop moves slower.
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] });
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, -140]);
+  const copyOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
+  const sceneY = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const sceneScale = useTransform(scrollYProgress, [0, 1], [1, 0.85]);
+
   return (
-    <section className="grain relative isolate overflow-hidden pt-28 pb-20 md:pt-32 md:pb-28">
+    <section ref={sectionRef} className="grain relative isolate overflow-hidden pt-28 pb-20 md:pt-32 md:pb-28">
       {/* Cinematic backdrop */}
-      <img
+      <motion.img
+        style={{ y: bgY }}
         src={unsplash(PHOTOS.heroLiquid, 1600)}
         srcSet={unsplashSrcSet(PHOTOS.heroLiquid)}
         sizes="100vw"
@@ -58,7 +68,7 @@ export default function Hero() {
       <div className="absolute top-1/3 right-[12%] -z-10 h-80 w-80 rounded-full bg-accent/20 blur-[120px]" />
 
       <div className="mx-auto grid max-w-7xl items-center gap-8 px-5 md:px-8 lg:grid-cols-[1.05fr_1fr]">
-        <div className="relative z-10 text-center lg:text-left">
+        <motion.div style={{ y: copyY, opacity: copyOpacity }} className="relative z-10 text-center lg:text-left">
           <motion.p
             variants={fadeUp} initial="hidden" animate="show" custom={0}
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium tracking-wide text-white/80 backdrop-blur"
@@ -108,25 +118,27 @@ export default function Hero() {
               </div>
             ))}
           </motion.dl>
-        </div>
+        </motion.div>
 
-        <motion.div
-          ref={sceneRef}
-          initial={{ opacity: 0, scale: 0.94 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="relative h-[380px] cursor-grab touch-pan-y active:cursor-grabbing sm:h-[460px] lg:h-[620px]"
-        >
-          {webgl ? (
-            <Suspense fallback={<BottleFallback />}>
-              <BottleScene isMobile={isMobile} frameloop={frameloop} model={MODEL_OVERRIDE} />
-            </Suspense>
-          ) : (
-            <BottleFallback />
-          )}
-          <p className="pointer-events-none absolute -bottom-3 w-full text-center text-[11px] tracking-[0.2em] text-white/35 uppercase">
-            {isMobile ? 'Drag to rotate' : 'Drag or move your cursor'}
-          </p>
+        <motion.div style={{ y: sceneY, scale: sceneScale }}>
+          <motion.div
+            ref={sceneRef}
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="relative h-[380px] cursor-grab touch-pan-y active:cursor-grabbing sm:h-[460px] lg:h-[620px]"
+          >
+            {webgl ? (
+              <Suspense fallback={<BottleFallback />}>
+                <HeroScene isMobile={isMobile} frameloop={frameloop} model={MODEL_OVERRIDE} />
+              </Suspense>
+            ) : (
+              <BottleFallback />
+            )}
+            <p className="pointer-events-none absolute -bottom-3 w-full text-center text-[11px] tracking-[0.2em] text-white/35 uppercase">
+              {isMobile ? 'Drag to rotate' : 'Drag or move your cursor'}
+            </p>
+          </motion.div>
         </motion.div>
       </div>
     </section>
