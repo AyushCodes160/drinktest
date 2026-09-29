@@ -27,7 +27,7 @@ export default function SectionHeading({ eyebrow, title, subtitle, align = 'cent
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: '-80px' }}
-      className={`max-w-2xl ${alignment}`}
+      className={`text-legible max-w-2xl ${alignment}`}
     >
       <motion.p variants={rise} className="text-xs font-semibold tracking-[0.25em] text-accent uppercase">{eyebrow}</motion.p>
       <h2 className="mt-4 text-4xl leading-[1.05] font-extrabold tracking-[-0.03em] sm:text-5xl" aria-label={title}>

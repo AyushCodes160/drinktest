@@ -1,24 +1,30 @@
 import { useRef, useState } from 'react';
 import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Check, Loader2 } from 'lucide-react';
+import { ArrowRight, Check, Loader2, ShieldCheck, Truck } from 'lucide-react';
+import { PREORDER } from '../config';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: PREORDER.currency });
 
-// Replace with a real call to your email provider (ConvertKit, Mailchimp, Resend, etc.).
-async function joinWaitlist(email) {
+// Replace with a real call to your checkout or email provider (Shopify, Stripe, Resend, etc.).
+async function submitPreorder(order) {
   await new Promise((r) => setTimeout(r, 900));
-  return { ok: true, email };
+  return { ok: true, order };
 }
 
 export default function FinalCTA() {
+  const [pack, setPack] = useState(PREORDER.packs[0].id);
   const [email, setEmail] = useState('');
   const [state, setState] = useState('idle'); // idle | loading | success | error
   const [error, setError] = useState('');
   const sectionRef = useRef(null);
-  // The card grows to full size and the gradient drifts as it scrolls into view.
+
+  // The box grows to full size as it scrolls into view.
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'center center'] });
-  const scale = useTransform(scrollYProgress, [0, 1], [0.86, 1]);
-  const bgPos = useTransform(scrollYProgress, [0, 1], ['0% 0%', '100% 100%']);
+  const scale = useTransform(scrollYProgress, [0, 1], [0.9, 1]);
+
+  const selected = PREORDER.packs.find((p) => p.id === pack);
+  const total = selected.price * (1 - PREORDER.discount);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -29,7 +35,7 @@ export default function FinalCTA() {
     }
     setState('loading');
     try {
-      await joinWaitlist(email.trim());
+      await submitPreorder({ email: email.trim(), pack });
       setState('success');
     } catch {
       setState('error');
@@ -38,50 +44,73 @@ export default function FinalCTA() {
   }
 
   return (
-    <section ref={sectionRef} id="waitlist" className="scroll-mt-20 px-5 py-16 md:px-8 md:py-24">
-      <motion.div
-        style={{ scale, backgroundPosition: bgPos }}
-        className="grain relative mx-auto max-w-7xl overflow-hidden rounded-[32px] bg-[linear-gradient(135deg,#c8ff2e_0%,#5ef0c5_30%,#2a6bff_60%,#c8ff2e_100%)] bg-[length:200%_200%] px-6 py-20 text-ink md:px-16 md:py-28"
-      >
-        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-white/30 blur-3xl" />
-        <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-[#2a6bff]/50 blur-3xl" />
+    <section ref={sectionRef} id="waitlist" data-story="3" className="relative scroll-mt-20 overflow-hidden px-5 py-24 md:px-8 md:py-32">
+      {/* Full-width launch gradient, kept low so the can and copy stay readable over it */}
+      <div aria-hidden="true" className="absolute inset-0 -z-0 bg-[radial-gradient(ellipse_at_30%_50%,rgb(200_255_46/0.16),transparent_55%),radial-gradient(ellipse_at_80%_60%,rgb(42_107_255/0.18),transparent_55%)]" />
 
+      <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-2">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mx-auto max-w-2xl text-center"
+          style={{ scale }}
+          className="glass relative overflow-hidden rounded-[32px] p-6 shadow-[0_0_90px_-25px_rgb(200_255_46/0.45)] sm:p-8 md:p-10"
         >
-          <p className="text-xs font-bold tracking-[0.25em] uppercase opacity-70">First batch · Limited run</p>
-          <h2 className="mt-4 text-4xl leading-[1] font-extrabold tracking-[-0.035em] sm:text-6xl">
-            Your last<br />complicated meal.
-          </h2>
-          <p className="mx-auto mt-6 max-w-md text-lg font-medium opacity-80">
-            Join the waitlist to get 20% off your first order.
+          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-[#5ef0c5] to-[#2a6bff]" />
+
+          <p className="text-xs font-bold tracking-[0.25em] text-accent uppercase">First batch · Limited run</p>
+          <h2 className="text-legible mt-3 text-4xl leading-[1] font-extrabold tracking-[-0.035em] sm:text-5xl">Pre-order now.</h2>
+          <p className="mt-4 max-w-md text-white/70">
+            Join the waitlist to get 20% off your first order. Reserve your pack today.
           </p>
 
-          <div className="mx-auto mt-10 max-w-lg">
-            <AnimatePresence mode="wait">
-              {state === 'success' ? (
-                <motion.div
-                  key="done"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center justify-center gap-3 rounded-full bg-ink px-6 py-4 font-semibold text-white"
-                  role="status"
-                >
-                  <span className="grid h-6 w-6 place-items-center rounded-full bg-accent text-ink"><Check size={14} strokeWidth={3} /></span>
-                  You're on the list. Watch your inbox for your 20% code.
-                </motion.div>
-              ) : (
-                <motion.form
-                  key="form"
-                  exit={{ opacity: 0, scale: 0.97 }}
-                  onSubmit={onSubmit}
-                  noValidate
-                  className="flex flex-col gap-2 rounded-[28px] bg-ink p-2 shadow-2xl shadow-ink/30 sm:flex-row sm:rounded-full"
-                >
+          <AnimatePresence mode="wait">
+            {state === 'success' ? (
+              <motion.div
+                key="done"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-8 flex items-start gap-3 rounded-2xl border border-accent/30 bg-accent/10 p-5"
+                role="status"
+              >
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent text-ink"><Check size={15} strokeWidth={3} /></span>
+                <span>
+                  <span className="block font-semibold">You're on the list.</span>
+                  <span className="mt-1 block text-sm text-white/70">
+                    We've reserved a {selected.label} for {email.trim()}. Your 20% code arrives before launch.
+                  </span>
+                </span>
+              </motion.div>
+            ) : (
+              <motion.form key="form" exit={{ opacity: 0, scale: 0.98 }} onSubmit={onSubmit} noValidate className="mt-8">
+                <fieldset>
+                  <legend className="mb-3 text-sm font-medium text-white/80">Choose your pack</legend>
+                  <div className="grid grid-cols-2 gap-3">
+                    {PREORDER.packs.map((p) => (
+                      <label
+                        key={p.id}
+                        className={`relative cursor-pointer rounded-2xl border p-4 transition-colors ${
+                          pack === p.id ? 'border-accent bg-accent/10' : 'border-white/10 bg-black/30 hover:border-white/30'
+                        }`}
+                      >
+                        <input type="radio" name="pack" value={p.id} checked={pack === p.id} onChange={() => setPack(p.id)} className="sr-only" />
+                        {p.tag && (
+                          <span className="absolute -top-2.5 right-3 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-ink">{p.tag}</span>
+                        )}
+                        <span className="block font-semibold">{p.label}</span>
+                        <span className="block text-xs text-white/55">{p.detail}</span>
+                        <span className="mt-2 block text-sm">
+                          <span className="font-bold">{money.format(p.price * (1 - PREORDER.discount))}</span>{' '}
+                          <span className="text-white/40 line-through">{money.format(p.price)}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <div className="mt-6 flex items-center justify-between border-t border-line pt-5 text-sm">
+                  <span className="text-white/70">Early-bird total <span className="text-accent">(−20%)</span></span>
+                  <span className="text-xl font-bold tabular-nums">{money.format(total)}</span>
+                </div>
+
+                <div className="mt-5 flex flex-col gap-2 sm:flex-row">
                   <label htmlFor="email" className="sr-only">Email address</label>
                   <input
                     id="email"
@@ -92,25 +121,32 @@ export default function FinalCTA() {
                     onChange={(e) => { setEmail(e.target.value); if (state === 'error') setState('idle'); }}
                     aria-invalid={state === 'error'}
                     aria-describedby={state === 'error' ? 'email-error' : undefined}
-                    className="min-w-0 flex-1 rounded-full bg-transparent px-5 py-3.5 text-white placeholder:text-white/40 focus:outline-none"
+                    className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/40 px-5 py-3.5 text-white placeholder:text-white/40 focus:border-accent focus:outline-none"
                   />
                   <button
                     type="submit"
                     disabled={state === 'loading'}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-bold text-ink transition hover:brightness-110 disabled:opacity-70"
+                    className="glow-accent inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-bold text-ink transition hover:brightness-110 disabled:opacity-70"
                   >
-                    {state === 'loading' ? <Loader2 size={16} className="animate-spin" /> : <>Claim 20% off <ArrowRight size={16} strokeWidth={2.5} /></>}
+                    {state === 'loading' ? <Loader2 size={16} className="animate-spin" /> : <>Pre-order now <ArrowRight size={16} strokeWidth={2.5} /></>}
                   </button>
-                </motion.form>
-              )}
-            </AnimatePresence>
-            <p id="email-error" className="mt-3 min-h-5 text-sm font-semibold" role="alert">
-              {state === 'error' ? error : ''}
-            </p>
-            <p className="text-xs font-medium opacity-60">No spam. Unsubscribe anytime.</p>
-          </div>
+                </div>
+                <p id="email-error" className="mt-3 min-h-5 text-sm font-semibold text-[#ff8a8a]" role="alert">
+                  {state === 'error' ? error : ''}
+                </p>
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-xs text-white/55">
+            <li className="flex items-center gap-1.5"><Truck size={14} /> Ships at launch</li>
+            <li className="flex items-center gap-1.5"><ShieldCheck size={14} /> Cancel anytime before shipping</li>
+          </ul>
         </motion.div>
-      </motion.div>
+
+        {/* Desktop: the reformed can settles here, beside the box, from the story layer. */}
+        <div aria-hidden="true" className="hidden h-[520px] lg:block" />
+      </div>
     </section>
   );
 }

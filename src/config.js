@@ -53,3 +53,13 @@ export const REVIEWS = [
   { name: 'Hannah J.', role: 'Parent of three', text: 'I finally eat something real in the morning chaos. Ready before the kids find their shoes.' },
   { name: 'Carlos V.', role: 'Powerlifter', text: '30g protein, clean label, great texture. It lives in my gym bag permanently now.' },
 ];
+
+// Pre-order packs shown in the checkout box. Placeholder prices — set your real ones.
+export const PREORDER = {
+  discount: 0.2,
+  currency: 'USD',
+  packs: [
+    { id: '12', label: '12-pack', detail: '12 × 500ml', price: 39 },
+    { id: '24', label: '24-pack', detail: '24 × 500ml', price: 72, tag: 'Best value' },
+  ],
+};

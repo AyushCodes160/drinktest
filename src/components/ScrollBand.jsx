@@ -10,7 +10,7 @@ export default function ScrollBand({ words }) {
   const line = Array.from({ length: 4 }, () => words).flat();
 
   return (
-    <div ref={ref} aria-hidden="true" className="overflow-hidden border-y border-line py-8 select-none md:py-12">
+    <div ref={ref} aria-hidden="true" className="glass overflow-hidden border-x-0 py-8 select-none md:py-12">
       <motion.div style={{ x: forward }} className="flex w-max items-center gap-8 text-[13vw] leading-none font-extrabold tracking-[-0.04em] md:text-[8vw]">
         {line.map((w, i) => (
           <span key={i} className="flex items-center gap-8">

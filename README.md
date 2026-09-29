@@ -12,7 +12,7 @@ npm run build    # production build in dist/
 - **Brand name, photos, ingredients, reviews:** `src/config.js`
 - **Colors & font:** `@theme` block in `src/index.css` (`--color-accent` is the neon CTA color)
 - **3D models:** `src/three/products.jsx` (bottle, textured can, generated GLB); lighting in `src/three/Studio.jsx`
-- **Reveal animation:** `BEATS` in `src/three/RevealScene.jsx` sets when the split and liquid happen; particle look in `src/three/LiquidTorrent.jsx`
+- **Scroll story:** sections marked `data-story="0..3"` are the waypoints. `BEATS` (tab, split, burst, reform timing) and `LAYOUTS` (where the can sits per device) live in `src/three/story.js`; the scene is `src/three/StoryScene.jsx`, the soda particles `src/three/EnergyField.jsx`
 - **Waitlist form:** replace `joinWaitlist()` in `src/components/FinalCTA.jsx` with your email provider
 
 ## Before launch

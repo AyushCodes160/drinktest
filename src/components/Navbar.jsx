@@ -41,7 +41,7 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden md:block">
-          <Button href="#waitlist" className="px-5 py-2.5">Join waitlist</Button>
+          <Button href="#waitlist" className="px-5 py-2.5">Pre-order</Button>
         </div>
 
         <button
@@ -66,7 +66,7 @@ export default function Navbar() {
               </li>
             ))}
           </ul>
-          <Button href="#waitlist" onClick={() => setOpen(false)} className="mt-4 w-full">Join waitlist</Button>
+          <Button href="#waitlist" onClick={() => setOpen(false)} className="mt-4 w-full">Pre-order</Button>
         </div>
       )}
     </header>

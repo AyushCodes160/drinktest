@@ -152,3 +152,54 @@ export function GeneratedModel() {
 
   return <primitive object={scene} scale={scale} position={position} />;
 }
+
+// ---------------------------------------------------------------------------
+// Pull-tab for the can lid. The tab hinges at its rivet; rotate the returned
+// group's `hinge` ref on X to crack it open.
+// ---------------------------------------------------------------------------
+
+function tabShape() {
+  // Rounded plate with a finger hole, drawn in the lid plane (x across, y toward the front).
+  const w = 0.15, h = 0.3, r = 0.07;
+  const s = new THREE.Shape();
+  s.moveTo(-w + r, -0.04);
+  s.lineTo(w - r, -0.04);
+  s.quadraticCurveTo(w, -0.04, w, -0.04 + r);
+  s.lineTo(w, h - r);
+  s.quadraticCurveTo(w, h, w - r, h);
+  s.lineTo(-w + r, h);
+  s.quadraticCurveTo(-w, h, -w, h - r);
+  s.lineTo(-w, -0.04 + r);
+  s.quadraticCurveTo(-w, -0.04, -w + r, -0.04);
+  const hole = new THREE.Path();
+  hole.absellipse(0, 0.19, 0.08, 0.06, 0, Math.PI * 2, true);
+  s.holes.push(hole);
+  return s;
+}
+
+export function PullTab({ hingeRef, openingRef, lidY }) {
+  const geometry = useMemo(
+    () => new THREE.ExtrudeGeometry(tabShape(), { depth: 0.014, bevelEnabled: true, bevelSize: 0.006, bevelThickness: 0.004, bevelSegments: 2 }),
+    [],
+  );
+  return (
+    <group position={[0, lidY, 0.02]}>
+      {/* Opening in the lid, revealed (and glowing) as the tab lifts */}
+      <mesh position={[0, 0.004, 0.22]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, 0.62, 1]}>
+        <circleGeometry args={[0.1, 32]} />
+        <meshStandardMaterial ref={openingRef} color="#050605" emissive="#c8ff2e" emissiveIntensity={0} toneMapped={false} />
+      </mesh>
+      {/* Rivet */}
+      <mesh position={[0, 0.01, 0]}>
+        <cylinderGeometry args={[0.035, 0.04, 0.02, 20]} />
+        <meshStandardMaterial color="#d7dadf" metalness={1} roughness={0.2} />
+      </mesh>
+      <group ref={hingeRef}>
+        {/* Rotating +90° on X maps the shape's +y to the can's front (+z); the plate extrudes downward */}
+        <mesh geometry={geometry} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+          <meshStandardMaterial color="#d2d5da" metalness={1} roughness={0.22} />
+        </mesh>
+      </group>
+    </group>
+  );
+}

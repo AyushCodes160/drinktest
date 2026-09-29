@@ -5,7 +5,7 @@ import { REVIEWS } from '../config';
 function ReviewCard({ review }) {
   const initials = review.name.split(' ').map((p) => p[0]).join('');
   return (
-    <figure className="w-[300px] shrink-0 rounded-2xl border border-line bg-ink-2 p-6 sm:w-[360px]">
+    <figure className="w-[300px] shrink-0 rounded-2xl border border-white/10 bg-black/65 p-6 sm:w-[360px]">
       <div className="flex gap-0.5 text-accent" aria-label="5 out of 5 stars">
         {Array.from({ length: 5 }, (_, i) => (
           <Star key={i} size={15} fill="currentColor" strokeWidth={0} />
