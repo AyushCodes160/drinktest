@@ -93,6 +93,17 @@ function wrappedHalf(thetaStart) {
   return g;
 }
 
+// Replace a lathe's UVs with a straight-down planar projection, so a top-view photo lands
+// on the lid exactly as it looks from above (image top toward -Z, the far side).
+function topDownMapped(geometry) {
+  const pos = geometry.attributes.position;
+  const uv = geometry.attributes.uv;
+  for (let i = 0; i < pos.count; i++) {
+    uv.setXY(i, 0.5 + pos.getX(i) / (2 * CAN_RADIUS), 0.5 - pos.getZ(i) / (2 * CAN_RADIUS));
+  }
+  return geometry;
+}
+
 export function TexturedCan() {
   const texture = useTexture('/textures/can-front.jpg', (t) => {
     t.colorSpace = THREE.SRGBColorSpace;
@@ -102,7 +113,11 @@ export function TexturedCan() {
   // Both halves carry the artwork, so a logo faces the viewer through the whole rotation.
   const front = useMemo(() => wrappedHalf(-Math.PI / 2), []);
   const back = useMemo(() => wrappedHalf(Math.PI / 2), []);
-  const top = useMemo(() => lathe(CAN_TOP_PROFILE), []);
+  const lid = useTexture('/textures/lid-top.jpg', (t) => {
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+  });
+  const top = useMemo(() => topDownMapped(lathe(CAN_TOP_PROFILE)), []);
   const base = useMemo(() => lathe(CAN_BASE_PROFILE), []);
 
   const half = CAN_BODY_HEIGHT / 2;
@@ -116,8 +131,9 @@ export function TexturedCan() {
           <meshStandardMaterial map={texture} metalness={0.25} roughness={0.28} envMapIntensity={0.7} />
         </mesh>
       ))}
+      {/* Lid and shoulder carry the top-down reference photo (tab painted out; the 3D tab sits on top) */}
       <mesh geometry={top} position={[0, half, 0]}>
-        <meshStandardMaterial color="#b9bdc3" metalness={1} roughness={0.25} side={THREE.DoubleSide} />
+        <meshStandardMaterial map={lid} metalness={0.45} roughness={0.3} envMapIntensity={0.8} side={THREE.DoubleSide} />
       </mesh>
       <mesh geometry={base} position={[0, -half, 0]}>
         <meshStandardMaterial color="#9ea2a8" metalness={1} roughness={0.3} side={THREE.DoubleSide} />
@@ -154,50 +170,43 @@ export function GeneratedModel() {
 }
 
 // ---------------------------------------------------------------------------
-// Pull-tab for the can lid. The tab hinges at its rivet; rotate the returned
-// group's `hinge` ref on X to crack it open.
+// Pull-tab cut from the top-down reference photo. It hinges at the rivet (lid center);
+// rotate `hingeRef` negatively on X to lift the finger end while the nose presses into
+// the opening, like a real can.
 // ---------------------------------------------------------------------------
 
-function tabShape() {
-  // Rounded plate with a finger hole, drawn in the lid plane (x across, y toward the front).
-  const w = 0.15, h = 0.3, r = 0.07;
-  const s = new THREE.Shape();
-  s.moveTo(-w + r, -0.04);
-  s.lineTo(w - r, -0.04);
-  s.quadraticCurveTo(w, -0.04, w, -0.04 + r);
-  s.lineTo(w, h - r);
-  s.quadraticCurveTo(w, h, w - r, h);
-  s.lineTo(-w + r, h);
-  s.quadraticCurveTo(-w, h, -w, h - r);
-  s.lineTo(-w, -0.04 + r);
-  s.quadraticCurveTo(-w, -0.04, -w + r, -0.04);
-  const hole = new THREE.Path();
-  hole.absellipse(0, 0.19, 0.08, 0.06, 0, Math.PI * 2, true);
-  s.holes.push(hole);
-  return s;
-}
+// Measured from the reference: the lid is 317px across (= can diameter), the tab crop is
+// 81 × 125px and the rivet sits at 55% across / 69% down that crop.
+const PX = (CAN_RADIUS * 2) / 317;
+const TAB_W = 81 * PX;
+const TAB_H = 125 * PX;
+const TAB_CENTER = [(0.5 - 0.549) * TAB_W, -(0.692 - 0.5) * TAB_H]; // x, z relative to the rivet
+const OPENING_Z = -70 * PX; // the drinking hole, under the tab's nose
 
 export function PullTab({ hingeRef, openingRef, lidY }) {
-  const geometry = useMemo(
-    () => new THREE.ExtrudeGeometry(tabShape(), { depth: 0.014, bevelEnabled: true, bevelSize: 0.006, bevelThickness: 0.004, bevelSegments: 2 }),
-    [],
-  );
+  const texture = useTexture('/textures/lid-tab.png', (t) => {
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+  });
   return (
-    <group position={[0, lidY, 0.02]}>
+    <group position={[0, lidY, 0]}>
       {/* Opening in the lid, revealed (and glowing) as the tab lifts */}
-      <mesh position={[0, 0.004, 0.22]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, 0.62, 1]}>
-        <circleGeometry args={[0.1, 32]} />
+      <mesh position={[0, 0.004, OPENING_Z]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, 0.7, 1]}>
+        <circleGeometry args={[0.09, 32]} />
         <meshStandardMaterial ref={openingRef} color="#050605" emissive="#c8ff2e" emissiveIntensity={0} toneMapped={false} />
       </mesh>
-      {/* Rivet */}
-      <mesh position={[0, 0.01, 0]}>
-        <cylinderGeometry args={[0.035, 0.04, 0.02, 20]} />
-        <meshStandardMaterial color="#d7dadf" metalness={1} roughness={0.2} />
-      </mesh>
-      <group ref={hingeRef}>
-        {/* Rotating +90° on X maps the shape's +y to the can's front (+z); the plate extrudes downward */}
-        <mesh geometry={geometry} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
-          <meshStandardMaterial color="#d2d5da" metalness={1} roughness={0.22} />
+      <group ref={hingeRef} position={[0, 0.014, 0]}>
+        {/* Plane lies flat on the lid; the photo's top (the logo nose) points to -Z */}
+        <mesh position={[TAB_CENTER[0], 0.002, TAB_CENTER[1]]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[TAB_W, TAB_H]} />
+          <meshStandardMaterial
+            map={texture}
+            transparent
+            alphaTest={0.4}
+            metalness={0.5}
+            roughness={0.28}
+            side={THREE.DoubleSide}
+          />
         </mesh>
       </group>
     </group>
