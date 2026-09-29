@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useGLTF, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import { lidHole } from './story';
 
 // Every product model is sized to fit this height, centered on the origin.
 const PRODUCT_HEIGHT = 3.3;
@@ -93,6 +94,39 @@ function wrappedHalf(thetaStart) {
   return g;
 }
 
+// The drinking opening is cut into the lid texture in the shader, so the lid really has a
+// hole once the tab cracks. Every can instance (intact and both halves) shares `lidHole`;
+// the story scene drives it from 0 (sealed) to 1 (fully open).
+// Opening position/size in the lid's top-down UV space (measured from the reference photo:
+// the scored panel sits just in front of the rivet, toward +Z).
+const HOLE_CENTER_Z = 0.19;
+const HOLE_HALF = [0.105, 0.078]; // x, z
+const holeUniforms = {
+  uHole: lidHole,
+  uHoleCenter: { value: new THREE.Vector2(0.5, 0.5 - HOLE_CENTER_Z / (2 * CAN_RADIUS)) },
+  uHoleRadius: { value: new THREE.Vector2(HOLE_HALF[0] / (2 * CAN_RADIUS), HOLE_HALF[1] / (2 * CAN_RADIUS)) },
+};
+
+function cutLidOpening(shader) {
+  Object.assign(shader.uniforms, holeUniforms);
+  shader.fragmentShader = shader.fragmentShader
+    .replace(
+      'void main() {',
+      `uniform float uHole;
+      uniform vec2 uHoleCenter;
+      uniform vec2 uHoleRadius;
+      void main() {`,
+    )
+    .replace(
+      '#include <clipping_planes_fragment>',
+      `#include <clipping_planes_fragment>
+      if (uHole > 0.001) {
+        vec2 d = (vMapUv - uHoleCenter) / (uHoleRadius * uHole);
+        if (dot(d, d) < 1.0) discard;
+      }`,
+    );
+}
+
 // Replace a lathe's UVs with a straight-down planar projection, so a top-view photo lands
 // on the lid exactly as it looks from above (image top toward -Z, the far side).
 function topDownMapped(geometry) {
@@ -133,7 +167,15 @@ export function TexturedCan() {
       ))}
       {/* Lid and shoulder carry the top-down reference photo (tab painted out; the 3D tab sits on top) */}
       <mesh geometry={top} position={[0, half, 0]}>
-        <meshStandardMaterial map={lid} metalness={0.45} roughness={0.3} envMapIntensity={0.8} side={THREE.DoubleSide} />
+        <meshStandardMaterial
+          map={lid}
+          metalness={0.45}
+          roughness={0.3}
+          envMapIntensity={0.8}
+          side={THREE.DoubleSide}
+          onBeforeCompile={cutLidOpening}
+          customProgramCacheKey={() => 'lid-with-opening'}
+        />
       </mesh>
       <mesh geometry={base} position={[0, -half, 0]}>
         <meshStandardMaterial color="#9ea2a8" metalness={1} roughness={0.3} side={THREE.DoubleSide} />
@@ -170,9 +212,10 @@ export function GeneratedModel() {
 }
 
 // ---------------------------------------------------------------------------
-// Pull-tab cut from the top-down reference photo. It hinges at the rivet (lid center);
-// rotate `hingeRef` negatively on X to lift the finger end while the nose presses into
-// the opening, like a real can.
+// Pull-tab cut from the top-down reference photo, hinged at the rivet (lid center).
+// Cracking it (positive rotation on `hingeRef`) lifts the logo/finger end up and away while
+// the short nose drives down through the opening, pushing the scored panel (`flapRef`)
+// into the can, as in a real opened can.
 // ---------------------------------------------------------------------------
 
 // Measured from the reference: the lid is 317px across (= can diameter), the tab crop is
@@ -181,22 +224,35 @@ const PX = (CAN_RADIUS * 2) / 317;
 const TAB_W = 81 * PX;
 const TAB_H = 125 * PX;
 const TAB_CENTER = [(0.5 - 0.549) * TAB_W, -(0.692 - 0.5) * TAB_H]; // x, z relative to the rivet
-const OPENING_Z = -70 * PX; // the drinking hole, under the tab's nose
 
-export function PullTab({ hingeRef, openingRef, lidY }) {
+export function PullTab({ hingeRef, flapRef, liquidRef, lidY }) {
   const texture = useTexture('/textures/lid-tab.png', (t) => {
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 8;
   });
+  const hingeZ = HOLE_CENTER_Z - HOLE_HALF[1]; // the panel stays attached on the rivet side
   return (
     <group position={[0, lidY, 0]}>
-      {/* Opening in the lid, revealed (and glowing) as the tab lifts */}
-      <mesh position={[0, 0.004, OPENING_Z]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, 0.7, 1]}>
-        <circleGeometry args={[0.09, 32]} />
-        <meshStandardMaterial ref={openingRef} color="#050605" emissive="#c8ff2e" emissiveIntensity={0} toneMapped={false} />
+      {/* Inside the can, seen through the opening */}
+      <mesh position={[0, -0.2, HOLE_CENTER_Z]}>
+        <cylinderGeometry args={[HOLE_HALF[0] * 1.05, HOLE_HALF[0] * 1.05, 0.4, 32, 1, true]} />
+        <meshStandardMaterial color="#030303" roughness={1} side={THREE.BackSide} />
       </mesh>
+      <mesh position={[0, -0.34, HOLE_CENTER_Z]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[HOLE_HALF[0] * 1.05, 32]} />
+        <meshStandardMaterial ref={liquidRef} color="#020302" emissive="#c8ff2e" emissiveIntensity={0} />
+      </mesh>
+
+      {/* Scored panel, hinged on its rivet-side edge; it bends down into the can */}
+      <group ref={flapRef} position={[0, -0.004, hingeZ]}>
+        <mesh position={[0, 0, HOLE_HALF[1]]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, HOLE_HALF[1] / HOLE_HALF[0], 1]}>
+          <circleGeometry args={[HOLE_HALF[0] * 0.98, 32]} />
+          <meshStandardMaterial color="#9da1a6" metalness={1} roughness={0.35} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+
+      {/* The tab: photo cut-out, lying flat with its logo end toward -Z */}
       <group ref={hingeRef} position={[0, 0.014, 0]}>
-        {/* Plane lies flat on the lid; the photo's top (the logo nose) points to -Z */}
         <mesh position={[TAB_CENTER[0], 0.002, TAB_CENTER[1]]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[TAB_W, TAB_H]} />
           <meshStandardMaterial

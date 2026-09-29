@@ -5,10 +5,9 @@ import * as THREE from 'three';
 import { HERO_MODEL } from '../config';
 import { PullTab } from './products';
 import { MODELS, SPLIT_META } from './registry';
-import { BEATS, cameraAt, clamp, ease, layoutAt, seg, story } from './story';
+import { BEATS, cameraAt, ease, layoutAt, lidHole, seg, story } from './story';
 import ClippedHalf from './ClippedHalf';
 import ViscousFluid from './ViscousFluid';
-import LiquidTorrent from './LiquidTorrent';
 import FloatingMotes from './FloatingMotes';
 import Studio from './Studio';
 
@@ -23,9 +22,9 @@ const { damp } = THREE.MathUtils;
 const MODEL_KEY = new URLSearchParams(window.location.search).get('model') ?? HERO_MODEL;
 
 const QUALITY = {
-  desktop: { segments: 128, blobs: 7, cubes: 36, fizz: 450, motes: 200, bloom: true, dpr: [1, 1.75] },
-  tablet: { segments: 96, blobs: 5, cubes: 28, fizz: 250, motes: 120, bloom: false, dpr: [1, 1.5] },
-  mobile: { segments: 72, blobs: 4, cubes: 24, fizz: 160, motes: 80, bloom: false, dpr: [1, 1.5] },
+  desktop: { segments: 128, blobs: 7, cubes: 36, motes: 200, bloom: true, dpr: [1, 1.75] },
+  tablet: { segments: 96, blobs: 5, cubes: 28, motes: 120, bloom: false, dpr: [1, 1.5] },
+  mobile: { segments: 72, blobs: 4, cubes: 24, motes: 80, bloom: false, dpr: [1, 1.5] },
 };
 
 // Soft round shadow under the grounded bottom half (cheaper than real-time shadows).
@@ -51,6 +50,10 @@ function GroundShadow({ y, radius }) {
 
 // The storyline: reads the scroll position (story.s) every frame, flies the camera and
 // poses the can, its halves and the fluid.
+//
+// Until the split begins only one intact, uncut can is drawn (no seam, no trims). The two
+// clipped halves are swapped in exactly when the top starts to lift, and swapped back out
+// once the slam has sealed it, so the seam only exists while the can is actually open.
 function Scene({ tier, reducedMotion }) {
   const meta = SPLIT_META[MODEL_KEY] ?? SPLIT_META.bottle;
   const Product = MODELS[meta.model];
@@ -60,17 +63,19 @@ function Scene({ tier, reducedMotion }) {
 
   const model = useRef();
   const spin = useRef();
+  const intact = useRef();
   const top = useRef();
   const bottom = useRef();
+  const lidRig = useRef(); // tab + opening, follows the top half
   const hinge = useRef();
-  const opening = useRef();
+  const flap = useRef();
+  const innerLiquid = useRef();
   const glowDisc = useRef();
   const topDisc = useRef();
   const shock = useRef();
   const shockMat = useRef();
-  const fizz = useRef(0);
   const fluid = useRef({ erupt: 0, suck: 0, bottomY: meta.cutY, topY: meta.cutY });
-  const k = useRef({ s: 0, rotY: 0 });
+  const k = useRef({ s: 0 });
   const target = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((state, rawDelta) => {
@@ -79,10 +84,8 @@ function Scene({ tier, reducedMotion }) {
     const cur = k.current;
 
     // Glide toward the scroll position so every beat is smooth.
-    const prev = cur.s;
     cur.s = damp(cur.s, story.s, 5, d);
     const s = cur.s;
-    const ds = s - prev;
 
     // --- Beats --------------------------------------------------------------
     const crack = ease.outCubic(seg(s, BEATS.crack));
@@ -92,7 +95,12 @@ function Scene({ tier, reducedMotion }) {
     const slam = ease.inCubic(seg(s, BEATS.slam)); // accelerates into the impact
     const impact = seg(s, BEATS.impact);
     const spinT = ease.outCubic(seg(s, BEATS.spin));
-    const spray = seg(s, [BEATS.fizz[0], BEATS.fizz[0] + 0.12]) * (1 - seg(s, [BEATS.fizz[1] - 0.3, BEATS.fizz[1]]));
+
+    // --- Seamless until the split ---------------------------------------------
+    const splitOn = s >= BEATS.lift[0] && s < BEATS.slam[1];
+    intact.current.visible = !splitOn;
+    top.current.visible = splitOn;
+    bottom.current.visible = splitOn;
 
     // Top half: levitates, hangs with a slow bob and tilt, then slams shut.
     const hover = lift * (1 - slam);
@@ -101,15 +109,22 @@ function Scene({ tier, reducedMotion }) {
     top.current.position.y = hover * LIFT + bob + settle;
     top.current.rotation.z = hover * 0.12 + (reducedMotion ? 0 : Math.sin(t * 0.7) * 0.03 * hover);
     top.current.rotation.x = hover * -0.08;
+    lidRig.current.position.copy(top.current.position);
+    lidRig.current.rotation.copy(top.current.rotation);
 
+    // --- The crack ------------------------------------------------------------
+    // Tab: the logo end swings up and away, the nose drives into the opening; the panel
+    // bends down into the can. The tab snaps flat and the lid seals again on the slam.
+    const sealed = 1 - slam;
     if (hinge.current) {
-      // The tab snaps back flat as the can seals.
-      hinge.current.rotation.x = -crack * 1.0 * (1 - slam);
-      opening.current.emissiveIntensity = crack * 2.2 * (1 - slam);
+      const tabAngle = ease.outBack(seg(s, [BEATS.crack[0], BEATS.crack[0] + 0.25])) * 1.3;
+      hinge.current.rotation.x = tabAngle * sealed;
+      flap.current.rotation.x = ease.outCubic(seg(s, [BEATS.crack[0] + 0.04, BEATS.crack[1]])) * 1.35 * sealed;
+      innerLiquid.current.emissiveIntensity = crack * 0.22 * sealed; // faint glow deep inside
     }
-    fizz.current = spray;
+    lidHole.value = ease.outCubic(seg(s, [BEATS.crack[0] + 0.03, BEATS.crack[0] + 0.2])) * sealed;
 
-    // Glowing cross-sections while open; dark once sealed.
+    // Glowing cross-sections while open.
     const open = lift * (1 - slam);
     glowDisc.current.emissiveIntensity = open * (1.2 + 2.2 * erupt * (1 - suck)) * (1 + Math.sin(t * 5) * 0.1);
     topDisc.current.emissiveIntensity = open * 0.6;
@@ -127,25 +142,19 @@ function Scene({ tier, reducedMotion }) {
     shockMat.current.opacity = (1 - impact) * 0.9;
 
     // --- Rotation -------------------------------------------------------------
-    // Idle turn (plus a nudge from scrolling) while intact; squared to the camera while
-    // split; one quick full spin after the slam, landing facing front.
-    const splitHold = clamp(lift * 1.3, 0, 1) * (1 - slam);
-    const idle = reducedMotion ? 0 : d * 0.3;
-    cur.rotY += (idle + ds * 2.0) * (1 - splitHold);
+    // The logo and the opening face the camera throughout (a gentle sway in the hero),
+    // then one quick full spin after the slam, landing facing front.
     const cam = cameraAt(s);
-    const facing = Math.round(cur.rotY / TAU) * TAU + cam.azimuth;
-    const landing = Math.max(splitHold, seg(s, [2.84, 2.9]));
-    if (landing > 0) cur.rotY = damp(cur.rotY, facing, 5 * landing, d);
-    spin.current.rotation.y = cur.rotY + spinT * TAU;
-    // A little hop during the spin.
-    spin.current.position.y = ease.bell(spinT) * 0.35;
+    const sway = reducedMotion ? 0 : Math.sin(t * 0.6) * 0.22 * (1 - seg(s, BEATS.frontal));
+    spin.current.rotation.y = cam.azimuth + sway + spinT * TAU;
+    spin.current.position.y = ease.bell(spinT) * 0.35; // a little hop during the spin
 
     // --- Placement & camera ---------------------------------------------------
     const L = layoutAt(tier, s);
     model.current.scale.setScalar(L.scale);
 
-    // Orbit around the middle of the (possibly split) can.
-    target.set(0, (top.current.position.y / 2) * L.scale, 0);
+    // Aim at the lid for the crack, at the middle of the (possibly split) can otherwise.
+    target.set(0, (cam.focus * meta.lidY * 0.85 + top.current.position.y / 2) * L.scale, 0);
     const shake = ease.bell(impact) * 0.09;
     const sinP = Math.sin(cam.polar);
     camera.position.set(
@@ -175,8 +184,11 @@ function Scene({ tier, reducedMotion }) {
     <group ref={model}>
       <GroundShadow y={meta.baseY - 0.02} radius={meta.radius} />
       <group ref={spin}>
+        {/* One seamless can for everything before the split and after the seal */}
+        <group ref={intact}>{product}</group>
+
         {/* Bottom half: stays grounded; glowing liquid surface at the cut */}
-        <group ref={bottom}>
+        <group ref={bottom} visible={false}>
           <ClippedHalf normal={DOWN} offset={-meta.cutY} groupRef={bottom}>{product}</ClippedHalf>
           <mesh position={[0, meta.cutY - 0.2, 0]}>
             <cylinderGeometry args={[inner, inner, 0.4, 64, 1, true]} />
@@ -191,15 +203,10 @@ function Scene({ tier, reducedMotion }) {
             <meshStandardMaterial color="#e9ecef" metalness={1} roughness={0.15} />
           </mesh>
           <ViscousFluid fluid={fluid} segments={q.segments} blobs={q.blobs} resolution={q.cubes} />
-          {/* Shockwave when the top slams down */}
-          <mesh ref={shock} position={[0, meta.cutY, 0]} rotation={[Math.PI / 2, 0, 0]} visible={false}>
-            <torusGeometry args={[meta.radius * 1.02, 0.02, 8, 96]} />
-            <meshBasicMaterial ref={shockMat} color={ACCENT} transparent toneMapped={false} depthWrite={false} />
-          </mesh>
         </group>
 
-        {/* Top half: lid, pull-tab and upper body; levitates and slams back */}
-        <group ref={top}>
+        {/* Top half: upper body; levitates and slams back */}
+        <group ref={top} visible={false}>
           <ClippedHalf normal={UP} offset={meta.cutY} groupRef={top}>{product}</ClippedHalf>
           <mesh position={[0, meta.cutY + 0.2, 0]}>
             <cylinderGeometry args={[inner, inner, 0.4, 64, 1, true]} />
@@ -209,22 +216,24 @@ function Scene({ tier, reducedMotion }) {
             <circleGeometry args={[inner, 64]} />
             <meshStandardMaterial ref={topDisc} color="#050605" emissive={ACCENT} emissiveIntensity={0} />
           </mesh>
+          <mesh position={[0, meta.cutY, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[meta.radius, 0.012, 12, 96]} />
+            <meshStandardMaterial color="#e9ecef" metalness={1} roughness={0.15} />
+          </mesh>
+        </group>
+
+        {/* Shockwave when the top slams down */}
+        <mesh ref={shock} position={[0, meta.cutY, 0]} rotation={[Math.PI / 2, 0, 0]} visible={false}>
+          <torusGeometry args={[meta.radius * 1.02, 0.02, 8, 96]} />
+          <meshBasicMaterial ref={shockMat} color={ACCENT} transparent toneMapped={false} depthWrite={false} />
+        </mesh>
+
+        {/* Pull-tab and opening: shared by the intact can and the top half */}
+        <group ref={lidRig}>
           {meta.lidY != null && (
-            <>
-              <PullTab hingeRef={hinge} openingRef={opening} lidY={meta.lidY} />
-              <group position={[0, meta.lidY + 0.01, -0.24]}>
-                <LiquidTorrent
-                  count={q.fizz}
-                  radius={0.06}
-                  emit={fizz}
-                  size={50}
-                  up={[1.4, 2.6]}
-                  outward={[0.05, 0.4]}
-                  life={[0.5, 1.1]}
-                  gravity={-3.5}
-                />
-              </group>
-            </>
+            <Suspense fallback={null}>
+              <PullTab hingeRef={hinge} flapRef={flap} liquidRef={innerLiquid} lidY={meta.lidY} />
+            </Suspense>
           )}
         </group>
       </group>

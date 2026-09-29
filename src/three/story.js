@@ -6,6 +6,10 @@ export const story = {
   pointer: { x: 0, y: 0 },
 };
 
+// How far the lid's drinking opening is cut (0 sealed .. 1 open), shared as a shader uniform
+// by every can instance.
+export const lidHole = { value: 0 };
+
 // Plain math (no three.js import) so the page's scroll tracker stays out of the 3D bundle.
 export const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
 const smoothstep = (x, lo, hi) => {
@@ -31,25 +35,28 @@ export const ease = {
 // The storyline, in story units. It only moves forward: the second half is a new sequence
 // (suck back, slam, spin), not the first half played in reverse.
 export const BEATS = {
-  crack: [0.12, 0.7], //   hero: pull-tab cracks open
-  fizz: [0.35, 0.95], //   hero: a little spray from the opening
-  lift: [0.95, 1.5], //    nutrition: top half levitates, bottom stays grounded
-  erupt: [1.45, 2.1], //   ingredients: viscous fluid erupts between the halves
-  suck: [2.55, 2.84], //   reviews: fluid spirals back into the bottom half
-  slam: [2.84, 2.9], //    top half slams down and seals
-  impact: [2.89, 2.97], // shockwave + camera shake
-  spin: [2.9, 3.0], //     triumphant spin, lands beside the checkout box
+  frontal: [0.0, 0.1], //    hero: intact, seamless can, straight-on
+  toTop: [0.1, 0.45], //     camera rises to look down on the lid
+  crack: [0.45, 0.8], //     pull-tab cracks, panel pushes into the can
+  lift: [1.05, 1.5], //      nutrition: seam appears, top half levitates, bottom stays
+  erupt: [1.5, 2.1], //      ingredients: viscous fluid erupts between the halves
+  suck: [2.55, 2.84], //     reviews: fluid spirals back into the bottom half
+  slam: [2.84, 2.9], //      top half slams down and seals
+  impact: [2.89, 2.97], //   shockwave + camera shake
+  spin: [2.9, 3.0], //       triumphant spin, lands beside the checkout box
 };
 
-// Camera orbit around the can: polar angle from straight above (0 = top-down),
-// azimuth around the can, distance.
+// Camera orbit around the can: polar angle from straight above (0 = top-down), azimuth
+// around the can, distance, and focus (how high up the can to aim, 1 = the lid).
 const CAMERA = [
-  { s: 0, polar: 0.38, azimuth: 0.0, radius: 7.4 },
-  { s: 0.6, polar: 0.62, azimuth: 0.55, radius: 7.8 }, // slight orbit as the tab cracks
-  { s: 1.15, polar: 1.42, azimuth: 0.2, radius: 11.2 }, // sweep down to a side profile
-  { s: 2.0, polar: 1.5, azimuth: -0.25, radius: 11.8 },
-  { s: 2.6, polar: 1.4, azimuth: 0.3, radius: 11.2 },
-  { s: 3.0, polar: 1.33, azimuth: 0.0, radius: 8.8 },
+  { s: 0, polar: 1.5, azimuth: 0.0, radius: 8.8, focus: 0 }, //       frontal profile
+  { s: 0.1, polar: 1.48, azimuth: 0.0, radius: 8.8, focus: 0 },
+  { s: 0.45, polar: 0.78, azimuth: 0.0, radius: 6.0, focus: 1 }, //   looking down at the lid (~45°)
+  { s: 0.8, polar: 0.85, azimuth: 0.15, radius: 6.2, focus: 1 },
+  { s: 1.2, polar: 1.42, azimuth: 0.2, radius: 11.2, focus: 0 }, //   sweep down to a profile
+  { s: 2.0, polar: 1.5, azimuth: -0.25, radius: 11.8, focus: 0 },
+  { s: 2.6, polar: 1.4, azimuth: 0.3, radius: 11.2, focus: 0 },
+  { s: 3.0, polar: 1.4, azimuth: 0.0, radius: 8.8, focus: 0 },
 ];
 
 // Where the can sits on screen, per device: nx/ny place it in normalized screen space
@@ -57,8 +64,8 @@ const CAMERA = [
 // 50% smaller, low and centered, behind the copy.
 const LAYOUTS = {
   desktop: [
-    { s: 0, nx: 0.42, ny: 0.0, scale: 1.15 },
-    { s: 0.9, nx: 0.42, ny: 0.0, scale: 1.05 },
+    { s: 0, nx: 0.42, ny: 0.0, scale: 1.0 },
+    { s: 0.9, nx: 0.42, ny: 0.0, scale: 1.0 },
     { s: 1.3, nx: 0.5, ny: -0.05, scale: 1.0 },
     { s: 2.0, nx: -0.45, ny: -0.05, scale: 1.0 },
     { s: 2.6, nx: -0.45, ny: -0.05, scale: 1.0 },

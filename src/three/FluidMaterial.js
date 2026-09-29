@@ -65,6 +65,7 @@ const columnVertex = /* glsl */ `
   varying vec3 vNormalV;
   varying vec3 vViewPos;
   varying float vNoise;
+  varying vec3 vLocal;
 
   ${NOISE}
 
@@ -102,6 +103,7 @@ const columnVertex = /* glsl */ `
     vViewPos = mv.xyz;
     vNormalV = normalize(normalMatrix * nrm);
     vNoise = n;
+    vLocal = q;
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -111,11 +113,13 @@ const blobVertex = /* glsl */ `
   varying vec3 vNormalV;
   varying vec3 vViewPos;
   varying float vNoise;
+  varying vec3 vLocal;
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     vViewPos = mv.xyz;
     vNormalV = normalize(normalMatrix * normal);
     vNoise = position.y * 2.0;
+    vLocal = position * 1.7;
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -127,26 +131,43 @@ const fragment = /* glsl */ `
   varying vec3 vNormalV;
   varying vec3 vViewPos;
   varying float vNoise;
+  varying vec3 vLocal;
+
+  ${NOISE}
 
   void main() {
-    vec3 N = normalize(vNormalV);
     vec3 V = normalize(-vViewPos);
+    vec3 N = normalize(vNormalV);
+
+    // Slime texture: fine, slowly crawling ripples perturb the shading normal so the
+    // surface catches light unevenly, like a thick wet film.
+    vec3 p = vLocal * 7.0 + vec3(0.0, -uTime * 0.9, uTime * 0.4);
+    float r1 = snoise(p);
+    float r2 = snoise(p * 2.1 + 13.7);
+    N = normalize(N + 0.22 * vec3(r1, r2, snoise(p + 31.1)));
+
     float facing = max(dot(N, V), 0.0);
-    float fres = pow(1.0 - facing, 2.2);
+    float fres = pow(1.0 - facing, 2.4);
 
-    vec3 deep = vec3(0.03, 0.28, 0.06);
-    vec3 lime = vec3(0.78, 1.0, 0.18);
-    vec3 hot = vec3(0.95, 1.0, 0.72);
+    vec3 deep = vec3(0.02, 0.22, 0.05);
+    vec3 lime = vec3(0.76, 1.0, 0.16);
+    vec3 hot = vec3(0.96, 1.0, 0.7);
 
-    // Slow internal bands, like light scattering through thick liquid.
-    float bands = 0.5 + 0.5 * sin(vNoise * 5.0 + uTime * 1.3);
-    vec3 col = mix(deep, lime, 0.25 + 0.55 * fres + 0.2 * bands);
-    col += hot * pow(fres, 4.0) * 0.9;
+    // Light scattering through the body: thin edges and slow internal bands glow brightest.
+    float thickness = facing;
+    float bands = 0.5 + 0.5 * sin(vNoise * 5.0 + r1 * 1.5 + uTime * 1.3);
+    vec3 col = mix(deep, lime, 0.2 + 0.45 * (1.0 - thickness) + 0.25 * bands);
+    col += hot * pow(fres, 3.5) * 0.9;
 
-    // Wet specular highlight from a key light above-right.
+    // Back-lit subsurface glow (light from behind bleeding through).
     vec3 L = normalize(vec3(0.5, 0.9, 0.6));
+    float back = pow(max(dot(V, -L + N * 0.4), 0.0), 3.0);
+    col += lime * back * 0.6;
+
+    // Wet highlights: sharp and streaky, broken up by the ripples.
     vec3 H = normalize(L + V);
-    col += vec3(pow(max(dot(N, H), 0.0), 70.0)) * 1.1;
+    float spec = pow(max(dot(N, H), 0.0), 90.0) * (0.6 + 0.8 * max(r2, 0.0));
+    col += vec3(spec) * 1.4;
 
     gl_FragColor = vec4(col * uGlow, uOpacity);
   }

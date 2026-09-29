@@ -26,7 +26,6 @@ export default function App() {
       <main id="main">
         <div id="top" />
         <Hero />
-        <ScrollBand words={['Complete nutrition', 'Zero friction']} />
         <NutritionBento />
         <Ingredients />
         <ScrollBand words={['One bottle', 'Every nutrient']} />
