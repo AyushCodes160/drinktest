@@ -15,7 +15,8 @@ import { createBlobMaterial, createColumnMaterial } from './FluidMaterial';
 
 const BLOB_BOX = 1.7; // half-size of the metaball volume, in can units
 
-export default function ViscousFluid({ fluid, segments = 128, blobs = 7, resolution = 36 }) {
+// `radius` sets the column's thickness; `splash` scales how far the blobs fly out from it.
+export default function ViscousFluid({ fluid, segments = 128, blobs = 7, resolution = 36, glow = 1, radius = 0.46, splash = 1 }) {
   const column = useRef();
   const blobsRef = useRef();
   const columnMaterial = useMemo(() => createColumnMaterial(), []);
@@ -70,23 +71,24 @@ export default function ViscousFluid({ fluid, segments = 128, blobs = 7, resolut
     u.uTime.value = t;
     u.uHeight.value = Math.max(height, 0.001);
     u.uCenterY.value = bottomY - 0.25 + height / 2;
-    u.uRadius.value = 0.46 * (0.35 + 0.65 * erupt) * (1 - 0.85 * suck);
+    u.uRadius.value = radius * (0.35 + 0.65 * erupt) * (1 - 0.85 * suck);
     u.uTwist.value = 2.2 + suck * 16;
     u.uAmp.value = 0.1 + 0.06 * erupt + 0.12 * suck;
-    u.uGlow.value = 1.5 + 0.6 * suck;
+    u.uGlow.value = (1.5 + 0.6 * suck) * glow;
 
     // --- Metaballs ----------------------------------------------------------
     // Orbit the column in zero-g, then spiral inward and sink into the bottom half.
     const midY = (bottomY + topY) / 2;
     mc.position.set(0, midY, 0);
     mc.material.uniforms.uTime.value = t;
+    mc.material.uniforms.uGlow.value = 1.5 * glow;
     mc.reset();
     const spin = 1 + suck * 9;
     const spread = erupt * (1 - suck);
     const sink = (bottomY - midY) / BLOB_BOX; // bottom cut, in the volume's -1..1 space
     for (const o of orbits) {
       const a = o.phase + t * o.speed * spin;
-      const r = (o.radius + 0.12 * Math.sin(t * 1.3 + o.phase)) * spread;
+      const r = Math.min(0.85, (o.radius + 0.12 * Math.sin(t * 1.3 + o.phase)) * spread * splash);
       const yFloat = Math.sin(t * 0.8 * o.bob + o.phase) * 0.55 * spread;
       const y = THREE.MathUtils.lerp(yFloat, sink, suck);
       // addBall takes coordinates in 0..1 across the volume.

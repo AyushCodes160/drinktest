@@ -4,6 +4,9 @@
 export const story = {
   s: 0,
   pointer: { x: 0, y: 0 },
+  // Phones/tablets: the open gap (data-stage) nearest the middle of the screen, and where its
+  // center is vertically in canvas space (+1 top .. -1 bottom; beyond that is off-screen).
+  stage: { index: -1, ny: -2 },
 };
 
 // How far the lid's drinking opening is cut (0 sealed .. 1 open), shared as a shader uniform
@@ -46,6 +49,33 @@ export const BEATS = {
   spin: [2.9, 3.0], //       triumphant spin, lands beside the checkout box
 };
 
+// The bottle storyline. Like the can's, it only moves forward: the reseal is its own
+// sequence (funnel back, cap drops and twists shut), not the opening played backwards.
+export const BOTTLE_BEATS = {
+  intro: [0.0, 0.15], //      hero: intact bottle, slow turn
+  twist: [0.42, 0.72], //     cap unscrews (two turns)
+  pop: [0.68, 0.86], //       cap lifts clear of the neck
+  popImpact: [0.68, 0.8], //  camera jolt as the seal breaks
+  ribbon: [0.72, 1.55], //    cream ribbons rise out of the neck and wind around the bottle
+  widen: [1.55, 2.15], //     the vortex opens up behind the copy
+  retract: [2.25, 2.6], //    ribbons flow back into the neck before the bottle crosses the copy
+  drop: [2.84, 2.9], //       cap drops onto the neck
+  shut: [2.88, 2.96], //      and twists shut
+  sealImpact: [2.89, 2.97],
+  settle: [2.94, 3.0], //     small hop and settle beside the pre-order box
+};
+
+const BOTTLE_CAMERA = [
+  { s: 0, polar: 1.5, azimuth: 0.0, radius: 9.2, focus: 0 }, //       frontal profile
+  { s: 0.15, polar: 1.5, azimuth: 0.0, radius: 9.2, focus: 0 },
+  { s: 0.5, polar: 1.2, azimuth: 0.18, radius: 9.4, focus: 0.7 }, //  angled down at the cap
+  { s: 0.9, polar: 1.22, azimuth: 0.1, radius: 9.8, focus: 0.7 },
+  { s: 1.4, polar: 1.42, azimuth: 0.0, radius: 11.5, focus: 0.4 }, // pull back for the geyser
+  { s: 2.1, polar: 1.48, azimuth: -0.2, radius: 13.0, focus: 0.7 },
+  { s: 2.6, polar: 1.4, azimuth: 0.2, radius: 12.0, focus: 0.5 },
+  { s: 3.0, polar: 1.45, azimuth: 0.0, radius: 9.6, focus: 0 },
+];
+
 // Camera orbit around the can: polar angle from straight above (0 = top-down), azimuth
 // around the can, distance, and focus (how high up the can to aim, 1 = the lid).
 const CAMERA = [
@@ -60,8 +90,9 @@ const CAMERA = [
 ];
 
 // Where the can sits on screen, per device: nx/ny place it in normalized screen space
-// (-1..1, via a lens shift) and scale sizes the model. Phones and tablets keep it at least
-// 50% smaller, low and centered, behind the copy.
+// (-1..1, via a lens shift) and scale sizes the model. Phones and tablets never shift the
+// can sideways: it stays centered, docked toward the bottom and at half size or less, so it
+// reads as a moving background behind the copy.
 const LAYOUTS = {
   desktop: [
     { s: 0, nx: 0.42, ny: 0.0, scale: 1.0 },
@@ -71,13 +102,19 @@ const LAYOUTS = {
     { s: 2.6, nx: -0.45, ny: -0.05, scale: 1.0 },
     { s: 3.0, nx: 0.48, ny: -0.08, scale: 0.95 },
   ],
+  // Low under the hero buttons, docked at the bottom through the story, then rising into
+  // the open space above the footer to land.
   tablet: [
-    { s: 0, nx: 0.0, ny: -0.5, scale: 0.55 },
-    { s: 3.0, nx: 0.0, ny: -0.5, scale: 0.55 },
+    { s: 0, nx: 0.0, ny: -0.8, scale: 0.55 },
+    { s: 0.35, nx: 0.0, ny: -0.52, scale: 0.55 },
+    { s: 2.9, nx: 0.0, ny: -0.52, scale: 0.55 },
+    { s: 3.0, nx: 0.0, ny: 0.15, scale: 0.55 },
   ],
   mobile: [
-    { s: 0, nx: 0.0, ny: -0.55, scale: 0.45 },
-    { s: 3.0, nx: 0.0, ny: -0.55, scale: 0.45 },
+    { s: 0, nx: 0.0, ny: -0.95, scale: 0.55 }, // peeks up from the bottom edge under the hero copy
+    { s: 0.35, nx: 0.0, ny: -0.5, scale: 0.55 },
+    { s: 2.9, nx: 0.0, ny: -0.5, scale: 0.55 },
+    { s: 3.0, nx: 0.0, ny: 0.2, scale: 0.55 },
   ],
 };
 
@@ -96,5 +133,5 @@ function interpolate(stops, s) {
   return stops[stops.length - 1];
 }
 
-export const cameraAt = (s) => interpolate(CAMERA, s);
+export const cameraAt = (s, pack = 'can') => interpolate(pack === 'bottle' ? BOTTLE_CAMERA : CAMERA, s);
 export const layoutAt = (tier, s) => interpolate(LAYOUTS[tier], s);

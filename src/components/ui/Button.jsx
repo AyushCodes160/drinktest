@@ -4,7 +4,7 @@ const base =
 
 const variants = {
   primary:
-    'bg-accent text-ink glow-accent hover:brightness-110 hover:shadow-[0_0_0_1px_rgb(200_255_46/0.7),0_0_36px_0_rgb(200_255_46/0.7),0_0_90px_-10px_rgb(200_255_46/0.8)]',
+    'bg-accent text-ink glow-accent hover:brightness-110 hover:shadow-[0_0_0_1px_rgb(232_195_126/0.75),0_0_34px_-2px_rgb(232_195_126/0.6),0_0_90px_-10px_rgb(212_175_55/0.6)]',
   outline:
     'border border-white/20 text-white hover:border-white/60 hover:bg-white/5 backdrop-blur-sm',
 };

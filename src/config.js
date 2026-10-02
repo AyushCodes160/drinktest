@@ -1,6 +1,8 @@
 // Central place for brand copy and imagery — swap these to rebrand the page.
 
-export const BRAND = 'OMNIA';
+export const BRAND = 'ALXR';
+export const TAGLINE = ['Total Sustenance.', 'Pure Velocity.'];
+export const DESCRIPTOR = 'All-In-One Liquid Nutrition';
 
 // Which 3D product the hero shows:
 //   'bottle'       – procedural OMNIA bottle (brand-safe default)
@@ -10,10 +12,14 @@ export const BRAND = 'OMNIA';
 // local prototyping only — switch back to 'bottle' before deploying or sharing.
 export const HERO_MODEL = 'textured-can';
 
+// Which pack the scroll story uses: 'bottle' (500 mL ALXR shake bottle, cap twists off and
+// the shake ribbons out of the neck) or 'can' (the can story above, split in half).
+// Override in the browser with ?pack=can or ?pack=bottle.
+export const PACK = 'bottle';
+
 // Unsplash photo IDs (images.unsplash.com/photo-<id>). source.unsplash.com was retired,
 // so we reference specific photos and let Unsplash's CDN resize them.
 export const PHOTOS = {
-  heroLiquid: '1541701494587-cb58502866ab', // ink swirling in water
   ingredients: '1502741338009-cac2772e18bc', // blueberries, dark and moody
   strength: '1517836357463-d25dfeac3438', // barbell deadlift, dark gym
   sprint: '1461896836934-ffe607ba8211', // sprinter in starting blocks
@@ -34,32 +40,31 @@ export const NAV_LINKS = [
 ];
 
 export const INGREDIENTS = [
-  { name: 'Pea & brown rice protein', amount: '30g', note: 'Complete amino acid profile, easy on digestion.' },
-  { name: 'Gluten-free oats', amount: '32g', note: 'Slow-release carbs for steady, crash-free energy.' },
-  { name: 'Flaxseed & MCT oil', amount: '14g', note: 'Omega-3s and fast-fuel fats for focus.' },
-  { name: 'Wild blueberry powder', amount: '4g', note: 'Polyphenols and antioxidants, no added sugar.' },
-  { name: '27 vitamins & minerals', amount: '100%', note: 'Your full daily value, in highly absorbable forms.' },
-  { name: 'Prebiotic fiber blend', amount: '8g', note: 'Keeps you full for hours and supports gut health.' },
+  { name: 'Microfiltered milk protein isolate', amount: '35g', note: 'Cold-filtered whey and micellar casein: fast and slow amino acids in one pour.' },
+  { name: 'Gluten-free oats & isomaltulose', amount: '34g', note: 'Low-glycemic carbohydrates that release slowly. Zero refined sugar.' },
+  { name: 'MCT & high-oleic sunflower oil', amount: '16g', note: 'Clean fats for steady energy and fat-soluble vitamin uptake.' },
+  { name: 'Digestive enzyme blend', amount: '250mg', note: 'Protease, lactase and amylase so every gram is easy to digest.' },
+  { name: 'Prebiotic fiber (acacia & inulin)', amount: '9g', note: 'Feeds the gut microbiome and keeps you full for hours.' },
+  { name: '26 bioavailable micronutrients', amount: '100%', note: 'Methylated B12 and folate, magnesium bisglycinate, D3 + K2 and more.' },
 ];
 
 // Placeholder testimonials for the template — replace with real, attributable reviews before launch.
 export const REVIEWS = [
-  { name: 'Maya R.', role: 'Product designer', text: 'Replaced my 2pm sad desk lunch. Saves me 40 minutes a day and I actually like the taste.' },
-  { name: 'Daniel K.', role: 'Marathon runner', text: 'No afternoon crash, even on double-training days. The chocolate one is dangerously good.' },
-  { name: 'Priya S.', role: 'ER nurse', text: 'Twelve-hour shifts, zero time to eat. This is the first thing that has actually kept me going.' },
-  { name: 'Tom W.', role: 'Founder', text: 'Breakfast went from 20 minutes to 20 seconds. Macros are dialed in, I stopped thinking about it.' },
-  { name: 'Aisha B.', role: 'PhD student', text: 'Tastes like a real milkshake, not chalk. Stays full until dinner. Genuinely surprised.' },
-  { name: 'Leo M.', role: 'Software engineer', text: 'One bottle, done. My grocery bill dropped and my focus in the afternoon went way up.' },
-  { name: 'Hannah J.', role: 'Parent of three', text: 'I finally eat something real in the morning chaos. Ready before the kids find their shoes.' },
-  { name: 'Carlos V.', role: 'Powerlifter', text: '30g protein, clean label, great texture. It lives in my gym bag permanently now.' },
+  { name: 'Maya R.', role: 'Product designer', text: 'Tastes like a proper vanilla milkshake, and I am not hungry until dinner. It replaced my desk lunch.' },
+  { name: 'Daniel K.', role: 'Marathon runner', text: 'Thirty-five grams of protein that actually sits well. No bloating on long-run days.' },
+  { name: 'Priya S.', role: 'ER nurse', text: 'Twelve-hour shifts with no time to sit. One bottle carries me four hours, easily.' },
+  { name: 'Tom W.', role: 'Founder', text: 'Breakfast went from twenty minutes to twenty seconds, and my macros are finally consistent.' },
+  { name: 'Aisha B.', role: 'PhD student', text: 'Creamy, not chalky. No sugar crash at 3pm. I keep a few in the lab fridge.' },
+  { name: 'Leo M.', role: 'Software engineer', text: 'I stopped thinking about lunch. Focus in the afternoon is noticeably better.' },
+  { name: 'Hannah J.', role: 'Parent of three', text: 'The only breakfast I can finish before school drop-off. Clean label, too.' },
+  { name: 'Carlos V.', role: 'Powerlifter', text: 'Microfiltered protein plus real carbs. It lives in my gym bag now.' },
 ];
 
-// Pre-order packs shown in the checkout box. Placeholder prices — set your real ones.
 export const PREORDER = {
   discount: 0.2,
   currency: 'USD',
   packs: [
-    { id: '12', label: '12-pack', detail: '12 × 500ml', price: 39 },
-    { id: '24', label: '24-pack', detail: '24 × 500ml', price: 72, tag: 'Best value' },
+    { id: '12', label: '12-pack', detail: '12 × 500 mL', price: 59 },
+    { id: '24', label: '24-pack', detail: '24 × 500 mL', price: 108, tag: 'Best value' },
   ],
 };

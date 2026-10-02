@@ -46,19 +46,19 @@ export default function FinalCTA() {
   return (
     <section ref={sectionRef} id="waitlist" data-story="3" className="relative scroll-mt-20 overflow-hidden px-5 py-24 md:px-8 md:py-32">
       {/* Full-width launch gradient, kept low so the can and copy stay readable over it */}
-      <div aria-hidden="true" className="absolute inset-0 -z-0 bg-[radial-gradient(ellipse_at_30%_50%,rgb(200_255_46/0.16),transparent_55%),radial-gradient(ellipse_at_80%_60%,rgb(42_107_255/0.18),transparent_55%)]" />
+      <div aria-hidden="true" className="absolute inset-0 -z-0 bg-[radial-gradient(ellipse_at_30%_50%,rgb(232_195_126/0.12),transparent_55%),radial-gradient(ellipse_at_80%_60%,rgb(0_242_254/0.07),transparent_55%)]" />
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-2">
         <motion.div
           style={{ scale }}
-          className="glass relative overflow-hidden rounded-[32px] p-6 shadow-[0_0_90px_-25px_rgb(200_255_46/0.45)] sm:p-8 md:p-10"
+          className="glass relative overflow-hidden rounded-[32px] p-6 shadow-[0_0_90px_-25px_rgb(232_195_126/0.35)] sm:p-8 md:p-10"
         >
-          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-[#5ef0c5] to-[#2a6bff]" />
+          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-gold via-accent to-titanium" />
 
           <p className="text-xs font-bold tracking-[0.25em] text-accent uppercase">First batch · Limited run</p>
-          <h2 className="text-legible mt-3 text-4xl leading-[1] font-extrabold tracking-[-0.035em] sm:text-5xl">Pre-order now.</h2>
+          <h2 className="font-wide text-legible mt-3 text-4xl leading-[1] font-extrabold tracking-[-0.03em] uppercase sm:text-5xl">Pre-order now.</h2>
           <p className="mt-4 max-w-md text-white/70">
-            Join the waitlist to get 20% off your first order. Reserve your pack today.
+            The first batch ships at launch. Reserve a case today and get 20% off your first order.
           </p>
 
           <AnimatePresence mode="wait">
@@ -144,8 +144,9 @@ export default function FinalCTA() {
           </ul>
         </motion.div>
 
-        {/* Desktop: the reformed can settles here, beside the box, from the story layer. */}
-        <div aria-hidden="true" className="hidden h-[520px] lg:block" />
+        {/* Where the reformed can lands: beside the box on desktop, above it on phones/tablets
+            (so the landing is in view while the box is, not pushed under the header by the footer). */}
+        <div aria-hidden="true" data-stage className="order-first h-[40svh] lg:order-none lg:h-[520px]" />
       </div>
     </section>
   );

@@ -5,8 +5,11 @@ import { BRAND, NAV_LINKS } from '../config';
 
 export function Logo() {
   return (
-    <a href="#top" className="flex items-center gap-2 text-lg font-extrabold tracking-[0.18em]">
-      <span className="grid h-7 w-7 place-items-center rounded-full border-[3px] border-accent" aria-hidden="true" />
+    <a href="#top" className="font-wide flex items-center gap-2.5 text-lg font-extrabold tracking-[0.22em] text-titanium">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M9 24 L16 8 L23 24" fill="none" stroke="var(--color-accent)" strokeWidth="3.2" strokeLinejoin="round" />
+        <path d="M12.2 18.5h7.6" stroke="var(--color-titanium)" strokeWidth="2.4" />
+      </svg>
       {BRAND}
     </a>
   );

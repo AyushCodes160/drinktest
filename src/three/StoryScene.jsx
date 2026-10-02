@@ -2,7 +2,8 @@ import { Suspense, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { HERO_MODEL } from '../config';
+import { HERO_MODEL, PACK } from '../config';
+import BottleStory from './BottleStory';
 import { PullTab } from './products';
 import { MODELS, SPLIT_META } from './registry';
 import { BEATS, cameraAt, ease, layoutAt, lidHole, seg, story } from './story';
@@ -10,6 +11,7 @@ import ClippedHalf from './ClippedHalf';
 import ViscousFluid from './ViscousFluid';
 import FloatingMotes from './FloatingMotes';
 import Studio from './Studio';
+import { placeCamera } from './cameraRig';
 
 const ACCENT = '#c8ff2e';
 const TAU = Math.PI * 2;
@@ -18,13 +20,15 @@ const UP = [0, 1, 0];
 const DOWN = [0, -1, 0];
 const { damp } = THREE.MathUtils;
 
-// Optional ?model=bottle|textured-can|generated override, handy for comparing models.
-const MODEL_KEY = new URLSearchParams(window.location.search).get('model') ?? HERO_MODEL;
+// Optional URL overrides, handy for comparing: ?pack=can|bottle and ?model=bottle|textured-can|generated.
+const PARAMS = new URLSearchParams(window.location.search);
+const MODEL_KEY = PARAMS.get('model') ?? HERO_MODEL;
+const PACK_KEY = PARAMS.get('pack') ?? PACK;
 
 const QUALITY = {
-  desktop: { segments: 128, blobs: 7, cubes: 36, motes: 200, bloom: true, dpr: [1, 1.75] },
-  tablet: { segments: 96, blobs: 5, cubes: 28, motes: 120, bloom: false, dpr: [1, 1.5] },
-  mobile: { segments: 72, blobs: 4, cubes: 24, motes: 80, bloom: false, dpr: [1, 1.5] },
+  desktop: { segments: 128, blobs: 7, cubes: 36, glow: 1, motes: 200, bloom: true, dpr: [1, 1.75] },
+  tablet: { segments: 96, blobs: 5, cubes: 28, glow: 0.8, motes: 120, bloom: false, dpr: [1, 1.5] },
+  mobile: { segments: 72, blobs: 4, cubes: 24, glow: 0.7, motes: 80, bloom: false, dpr: [1, 1.5] },
 };
 
 // Soft round shadow under the grounded bottom half (cheaper than real-time shadows).
@@ -75,7 +79,7 @@ function Scene({ tier, reducedMotion }) {
   const shock = useRef();
   const shockMat = useRef();
   const fluid = useRef({ erupt: 0, suck: 0, bottomY: meta.cutY, topY: meta.cutY });
-  const k = useRef({ s: 0 });
+  const k = useRef({ s: 0, stage: -1, ny: -2 });
   const target = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((state, rawDelta) => {
@@ -154,23 +158,12 @@ function Scene({ tier, reducedMotion }) {
     model.current.scale.setScalar(L.scale);
 
     // Aim at the lid for the crack, at the middle of the (possibly split) can otherwise.
-    target.set(0, (cam.focus * meta.lidY * 0.85 + top.current.position.y / 2) * L.scale, 0);
-    const shake = ease.bell(impact) * 0.09;
-    const sinP = Math.sin(cam.polar);
-    camera.position.set(
-      target.x + cam.radius * sinP * Math.sin(cam.azimuth) + Math.sin(t * 71) * shake,
-      target.y + cam.radius * Math.cos(cam.polar) + Math.cos(t * 63) * shake,
-      target.z + cam.radius * sinP * Math.cos(cam.azimuth),
-    );
-    camera.lookAt(target);
-
-    // Lens shift places the can left/right/low on screen without changing the orbit.
-    // Desktop also leans slightly toward the cursor.
-    const lean = tier === 'desktop' ? 0.03 : 0;
-    const nx = L.nx + story.pointer.x * lean;
-    const ny = L.ny + story.pointer.y * lean;
-    camera.setViewOffset(size.width, size.height, (-nx * size.width) / 2, (ny * size.height) / 2, size.width, size.height);
-    camera.updateProjectionMatrix();
+    placeCamera({
+      camera, size, tier, layout: L, cam, t, d, target,
+      targetY: (cam.focus * meta.lidY * 0.85 + top.current.position.y / 2) * L.scale,
+      shake: ease.bell(impact),
+      state: cur,
+    });
   });
 
   const product = (
@@ -202,7 +195,7 @@ function Scene({ tier, reducedMotion }) {
             <torusGeometry args={[meta.radius, 0.012, 12, 96]} />
             <meshStandardMaterial color="#e9ecef" metalness={1} roughness={0.15} />
           </mesh>
-          <ViscousFluid fluid={fluid} segments={q.segments} blobs={q.blobs} resolution={q.cubes} />
+          <ViscousFluid fluid={fluid} segments={q.segments} blobs={q.blobs} resolution={q.cubes} glow={q.glow} />
         </group>
 
         {/* Top half: upper body; levitates and slams back */}
@@ -255,13 +248,24 @@ export default function StoryScene({ tier = 'desktop', reducedMotion = false }) 
     >
       <ambientLight intensity={0.25} />
       <spotLight position={[4, 7, 5]} angle={0.4} penumbra={1} intensity={70} />
-      <pointLight position={[0, 0.3, 0]} color={ACCENT} intensity={3} distance={4} />
-      <Scene tier={tier} reducedMotion={reducedMotion} />
-      <FloatingMotes count={q.motes} />
+      <pointLight position={[0, 0.3, 0]} color={PACK_KEY === 'bottle' ? '#e8c37e' : ACCENT} intensity={PACK_KEY === 'bottle' ? 1.2 : 3} distance={4} />
+      {PACK_KEY === 'bottle' ? (
+        <Suspense fallback={null}>
+          <BottleStory tier={tier} reducedMotion={reducedMotion} />
+        </Suspense>
+      ) : (
+        <Scene tier={tier} reducedMotion={reducedMotion} />
+      )}
+      <FloatingMotes count={PACK_KEY === 'bottle' ? Math.round(q.motes * 0.5) : q.motes} color={PACK_KEY === 'bottle' ? '#e8c37e' : ACCENT} size={PACK_KEY === 'bottle' ? 38 : 55} />
       <Studio />
       {q.bloom && (
         <EffectComposer multisampling={0}>
-          <Bloom mipmapBlur luminanceThreshold={0.65} luminanceSmoothing={0.2} intensity={0.85} radius={0.7} />
+          {PACK_KEY === 'bottle' ? (
+            // Only the brightest highlights bloom, so the cream reads as rich rather than glowing.
+            <Bloom mipmapBlur luminanceThreshold={0.9} luminanceSmoothing={0.15} intensity={0.45} radius={0.75} />
+          ) : (
+            <Bloom mipmapBlur luminanceThreshold={0.65} luminanceSmoothing={0.2} intensity={0.85} radius={0.7} />
+          )}
         </EffectComposer>
       )}
     </Canvas>

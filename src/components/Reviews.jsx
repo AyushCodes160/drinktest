@@ -5,7 +5,7 @@ import { REVIEWS } from '../config';
 function ReviewCard({ review }) {
   const initials = review.name.split(' ').map((p) => p[0]).join('');
   return (
-    <figure className="w-[300px] shrink-0 rounded-2xl border border-white/10 bg-black/65 p-6 sm:w-[360px]">
+    <figure className="w-[300px] shrink-0 rounded-2xl border border-white/10 bg-black/85 p-6 sm:w-[360px] sm:bg-black/65">
       <div className="flex gap-0.5 text-accent" aria-label="5 out of 5 stars">
         {Array.from({ length: 5 }, (_, i) => (
           <Star key={i} size={15} fill="currentColor" strokeWidth={0} />
@@ -13,7 +13,7 @@ function ReviewCard({ review }) {
       </div>
       <blockquote className="mt-4 text-[15px] leading-relaxed text-white/90">“{review.text}”</blockquote>
       <figcaption className="mt-5 flex items-center gap-3">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-xs font-bold text-ink">
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-accent to-titanium text-xs font-bold text-ink">
           {initials}
         </span>
         <span>
@@ -50,8 +50,8 @@ export default function Reviews() {
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <SectionHeading
           eyebrow="Early testers"
-          title="Less time eating. More time living."
-          subtitle="What our beta group said after four weeks of swapping one meal a day."
+          title="Fewer decisions. Better fuel."
+          subtitle="What our beta group said after four weeks of replacing one meal a day with ALXR."
         />
         <div className="mt-8 flex items-center justify-center gap-3 text-sm text-muted">
           <span className="flex gap-0.5 text-accent">

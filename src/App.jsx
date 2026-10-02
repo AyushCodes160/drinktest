@@ -23,12 +23,12 @@ export default function App() {
       <StoryLayer />
       <ScrollProgress />
       <Navbar />
-      <main id="main">
+      <main id="main" className="relative z-10">
         <div id="top" />
         <Hero />
         <NutritionBento />
         <Ingredients />
-        <ScrollBand words={['One bottle', 'Every nutrient']} />
+        <ScrollBand words={['Total sustenance', 'Pure velocity']} />
         <Reviews />
         <FinalCTA />
       </main>

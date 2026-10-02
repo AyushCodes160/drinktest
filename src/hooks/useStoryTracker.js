@@ -8,6 +8,10 @@ import { story } from '../three/story';
 export default function useStoryTracker() {
   useEffect(() => {
     let marks = [0];
+    let stages = []; // { top, height } in page coordinates
+
+    // The canvas is sized to the large viewport, so convert against its real height.
+    const canvasHeight = () => document.querySelector('canvas')?.clientHeight || window.innerHeight;
 
     const update = () => {
       const y = window.scrollY;
@@ -16,6 +20,23 @@ export default function useStoryTracker() {
         if (y >= marks[i]) s = i + Math.min(1, (y - marks[i]) / Math.max(1, marks[i + 1] - marks[i]));
       }
       story.s = s;
+
+      // Nearest stage gap to the middle of the screen.
+      const h = canvasHeight();
+      let best = -1;
+      let bestDist = Infinity;
+      let bestCenter = 0;
+      stages.forEach((st, i) => {
+        const center = st.top + st.height / 2 - y;
+        const dist = Math.abs(center - window.innerHeight / 2);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = i;
+          bestCenter = center;
+        }
+      });
+      story.stage.index = best;
+      story.stage.ny = best < 0 ? -2 : Math.max(-2, Math.min(2, 1 - (2 * bestCenter) / h));
     };
 
     const measure = () => {
@@ -31,6 +52,12 @@ export default function useStoryTracker() {
         // Others kick in as the section rises into the lower part of the screen.
         return Math.min(maxScroll, top - vh * 0.3);
       });
+      stages = [...document.querySelectorAll('[data-stage]')]
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          return { top: r.top + window.scrollY, height: r.height };
+        })
+        .filter((st) => st.height > 0);
       update();
     };
 

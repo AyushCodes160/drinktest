@@ -30,7 +30,7 @@ export default function SectionHeading({ eyebrow, title, subtitle, align = 'cent
       className={`text-legible max-w-2xl ${alignment}`}
     >
       <motion.p variants={rise} className="text-xs font-semibold tracking-[0.25em] text-accent uppercase">{eyebrow}</motion.p>
-      <h2 className="mt-4 text-4xl leading-[1.05] font-extrabold tracking-[-0.03em] sm:text-5xl" aria-label={title}>
+      <h2 className="font-wide mt-4 text-[2rem] leading-[1.06] font-extrabold tracking-[-0.025em] sm:text-[2.8rem]" aria-label={title}>
         {words.map((w, i) => (
           <span key={i} aria-hidden="true">
             <span className="inline-block overflow-hidden pb-[0.08em] align-bottom">

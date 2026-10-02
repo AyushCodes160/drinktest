@@ -16,8 +16,9 @@ export default function Ingredients() {
   return (
     <section id="ingredients" data-story="2" className="relative scroll-mt-20 py-24 md:py-32">
       <div className="mx-auto grid max-w-7xl gap-12 px-5 md:px-8 lg:grid-cols-2 lg:gap-20">
-        {/* Desktop: the split can and its glowing formula fill this side from the story layer. */}
-        <div aria-hidden="true" className="hidden lg:block" />
+        {/* Stage for the split can and its glowing formula: this whole column on desktop,
+            an open gap above the panel on phones/tablets. */}
+        <div aria-hidden="true" data-stage className="h-[60svh] lg:h-auto" />
 
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -28,9 +29,9 @@ export default function Ingredients() {
         >
           <SectionHeading
             align="left"
-            eyebrow="What's inside"
-            title="Short list. Serious results."
-            subtitle="Every ingredient earns its place. Here is exactly what goes into each 500ml bottle."
+            eyebrow="The formula"
+            title="Six ingredients. Zero filler."
+            subtitle="Every input is chosen for absorption and digestion. This is exactly what goes into each 500 mL bottle."
           />
 
           <motion.ol

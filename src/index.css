@@ -3,14 +3,19 @@
 
 @theme {
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Archivo', 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
 
-  --color-ink: #07080a;
-  --color-ink-2: #0e1013;
-  --color-ink-3: #15181c;
-  --color-line: rgb(255 255 255 / 0.08);
-  --color-muted: #9aa0a8;
-  --color-accent: #c8ff2e;
-  --color-accent-2: #7cf5ff;
+  /* ALXR luxury-matte palette */
+  --color-ink: #0b0c10;        /* deep obsidian canvas */
+  --color-ink-2: #121418;      /* matte graphite */
+  --color-ink-3: #1a1d23;
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-muted: #9aa1ad;
+  --color-titanium: #e2e8f0;   /* titanium frost */
+  --color-accent: #e8c37e;     /* raw vanilla / golden cream (CTAs, brand glow) */
+  --color-gold: #d4af37;
+  --color-accent-2: #00f2fe;   /* clean cyan (clinical nutrient stats) */
+  --color-cream: #e8d9c5;      /* the shake */
 
   --animate-marquee: marquee var(--marquee-duration, 45s) linear infinite;
   --animate-marquee-reverse: marquee var(--marquee-duration, 45s) linear infinite reverse;
@@ -38,9 +43,9 @@
 
 @utility glow-accent {
   box-shadow:
-    0 0 0 1px rgb(200 255 46 / 0.5),
-    0 0 24px -2px rgb(200 255 46 / 0.55),
-    0 0 64px -12px rgb(200 255 46 / 0.6);
+    0 0 0 1px rgb(232 195 126 / 0.55),
+    0 0 26px -4px rgb(232 195 126 / 0.5),
+    0 0 70px -16px rgb(212 175 55 / 0.55);
 }
 
 /* Keeps white copy crisp when glowing particles pass behind it */
@@ -48,17 +53,31 @@
   text-shadow: 0 2px 18px rgb(0 0 0 / 0.75), 0 0 2px rgb(0 0 0 / 0.5);
 }
 
-/* Frosted dark panel used for every card that floats over the 3D scene */
+/* Frosted obsidian glass for every card that floats over the 3D scene: a faint white
+   frost and hairline border over a dark base, so white copy stays readable when the
+   cream shake swirls behind it. */
 @utility glass {
-  background-color: rgb(0 0 0 / 0.5);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  backdrop-filter: blur(16px) saturate(1.2);
-  border: 1px solid rgb(255 255 255 / 0.09);
-  box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.75), 0 8px 20px -8px rgb(0 0 0 / 0.6);
+  background: linear-gradient(rgb(255 255 255 / 0.03), rgb(255 255 255 / 0.03)), rgb(11 12 16 / 0.62);
+  -webkit-backdrop-filter: blur(40px) saturate(1.15);
+  backdrop-filter: blur(40px) saturate(1.15);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.04);
+
+  /* Phones: denser base, since the bottle sits right behind the cards */
+  @media (max-width: 767px) {
+    background: linear-gradient(rgb(255 255 255 / 0.03), rgb(255 255 255 / 0.03)), rgb(11 12 16 / 0.8);
+  }
 }
 
+/* Display type: Archivo, widened, for the wordmark and headings */
+@utility font-wide {
+  font-family: var(--font-display);
+  font-stretch: 118%;
+}
+
+
 @utility text-gradient {
-  background: linear-gradient(100deg, #fff 30%, var(--color-accent) 70%, var(--color-accent-2));
+  background: linear-gradient(100deg, var(--color-titanium) 25%, var(--color-accent) 70%, var(--color-gold));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
