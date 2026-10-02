@@ -15,3 +15,20 @@ export default function Studio() {
     </Environment>
   );
 }
+
+// Product studio for the ALXR bottle: no direct lights, only light panels baked into the
+// environment. A soft overhead box and a dim front fill keep the matte graphite readable;
+// two tall strips behind the bottle give it a clean rim; warm gold and cool slate kickers
+// add depth to the metal collar and cap.
+export function BottleStudio() {
+  return (
+    <Environment resolution={256} frames={1}>
+      <Lightformer form="rect" intensity={2.2} position={[0, 6, 1]} rotation-x={Math.PI / 2} scale={[8, 4, 1]} />
+      <Lightformer form="rect" intensity={0.55} position={[0, 0.5, 6]} rotation-y={Math.PI} scale={[9, 6, 1]} />
+      <Lightformer form="rect" intensity={6} position={[-2.6, 0.4, -3]} scale={[0.5, 7, 1]} />
+      <Lightformer form="rect" intensity={5} position={[2.6, 0.4, -3]} scale={[0.4, 7, 1]} />
+      <Lightformer form="rect" intensity={1.2} color="#e8c37e" position={[-4, -1.5, 2]} rotation-y={Math.PI / 2.6} scale={[3, 3, 1]} />
+      <Lightformer form="rect" intensity={0.7} color="#9fb4c8" position={[4, -1, 2]} rotation-y={-Math.PI / 2.6} scale={[3, 3, 1]} />
+    </Environment>
+  );
+}

@@ -10,8 +10,10 @@ import Reviews from './components/Reviews';
 import FinalCTA from './components/FinalCTA';
 import Footer from './components/Footer';
 import useSmoothScroll from './hooks/useSmoothScroll';
+import useStartAtTop from './hooks/useStartAtTop';
 
 export default function App() {
+  useStartAtTop(); // before Lenis reads the starting scroll position
   useSmoothScroll();
 
   return (

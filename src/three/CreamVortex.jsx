@@ -60,17 +60,18 @@ const fragmentShader = /* glsl */ `
     float fill = max(dot(N, normalize(vec3(-0.6, 0.2, 0.4))), 0.0);
     vec3 col = base * (0.38 + 0.58 * wrap) + base * fill * 0.12;
 
-    // Velvety highlight (broad) and a small wet glint.
+    // Velvety highlight (broad) and a small wet glint. The glint and the golden rim go past
+    // 1.0 (this material isn't tone mapped), which is what the bloom pass keys on: only the
+    // ribbon's highlights glow, never the matte bottle.
     vec3 H = normalize(L + V);
     float nh = max(dot(N, H), 0.0);
-    col += vec3(1.0, 0.96, 0.88) * (pow(nh, 18.0) * 0.16 + pow(nh, 90.0) * 0.5);
+    col += vec3(1.0, 0.96, 0.88) * (pow(nh, 18.0) * 0.16 + pow(nh, 90.0) * 1.1);
 
     // Golden rim, like light through the edge of a thick shake.
     float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-    col += uGold * fres * 0.32;
+    col += uGold * fres * 0.75;
 
     gl_FragColor = vec4(col, 1.0);
-    #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
 `;
@@ -115,6 +116,7 @@ function useRibbon(opts, radius, segments) {
       new THREE.ShaderMaterial({
         vertexShader,
         fragmentShader,
+        toneMapped: false,
         uniforms: {
           uTime: { value: 0 },
           uProgress: { value: 0 },

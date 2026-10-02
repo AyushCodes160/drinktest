@@ -35,6 +35,10 @@ export default function useStoryTracker() {
           bestCenter = center;
         }
       });
+      if (stages.length) {
+        const last = stages[stages.length - 1];
+        story.anchor.ny = Math.max(-3, Math.min(3, 1 - (2 * (last.top + last.height / 2 - y)) / h));
+      }
       story.stage.index = best;
       story.stage.ny = best < 0 ? -2 : Math.max(-2, Math.min(2, 1 - (2 * bestCenter) / h));
     };

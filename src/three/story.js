@@ -7,6 +7,9 @@ export const story = {
   // Phones/tablets: the open gap (data-stage) nearest the middle of the screen, and where its
   // center is vertically in canvas space (+1 top .. -1 bottom; beyond that is off-screen).
   stage: { index: -1, ny: -2 },
+  // Desktop: where the pre-order stage (the last data-stage, beside the checkout card) is,
+  // vertically in canvas space. The bottle docks here for its final shot.
+  anchor: { ny: 0 },
 };
 
 // How far the lid's drinking opening is cut (0 sealed .. 1 open), shared as a shader uniform
@@ -100,7 +103,7 @@ const LAYOUTS = {
     { s: 1.3, nx: 0.5, ny: -0.05, scale: 1.0 },
     { s: 2.0, nx: -0.45, ny: -0.05, scale: 1.0 },
     { s: 2.6, nx: -0.45, ny: -0.05, scale: 1.0 },
-    { s: 3.0, nx: 0.48, ny: -0.08, scale: 0.95 },
+    { s: 3.0, nx: 0.36, ny: -0.08, scale: 0.95 }, // beside the pre-order card (vertical comes from the anchor)
   ],
   // Low under the hero buttons, docked at the bottom through the story, then rising into
   // the open space above the footer to land.
@@ -132,6 +135,21 @@ function interpolate(stops, s) {
   }
   return stops[stops.length - 1];
 }
+
+// The bottle's turn as a pure function of story position (radians). Front label faces the
+// viewer at the hero (s = 0) and again for the final shot (s = 3, after a full victory spin),
+// so scrubbing back up always rewinds to exactly the opening pose.
+const BOTTLE_TURN = [
+  { s: 0, turn: 0 },
+  { s: 0.45, turn: 0.32 }, //  a quarter-glance as the cap starts to turn
+  { s: 0.9, turn: -0.18 },
+  { s: 1.5, turn: 0.55 }, //   shows the side as the cream starts to wind
+  { s: 2.1, turn: -0.45 },
+  { s: 2.6, turn: 0.2 },
+  { s: 2.92, turn: 0 },
+  { s: 3.0, turn: Math.PI * 2 }, // victory spin, landing front-on
+];
+export const bottleTurnAt = (s) => interpolate(BOTTLE_TURN, s).turn;
 
 export const cameraAt = (s, pack = 'can') => interpolate(pack === 'bottle' ? BOTTLE_CAMERA : CAMERA, s);
 export const layoutAt = (tier, s) => interpolate(LAYOUTS[tier], s);

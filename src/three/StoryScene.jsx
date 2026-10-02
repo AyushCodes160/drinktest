@@ -1,6 +1,7 @@
-import { Suspense, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Bloom, EffectComposer } from '@react-three/postprocessing';
+import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
+import { Preload, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
 import { HERO_MODEL, PACK } from '../config';
 import BottleStory from './BottleStory';
@@ -10,7 +11,7 @@ import { BEATS, cameraAt, ease, layoutAt, lidHole, seg, story } from './story';
 import ClippedHalf from './ClippedHalf';
 import ViscousFluid from './ViscousFluid';
 import FloatingMotes from './FloatingMotes';
-import Studio from './Studio';
+import Studio, { BottleStudio } from './Studio';
 import { placeCamera } from './cameraRig';
 
 const ACCENT = '#c8ff2e';
@@ -234,38 +235,86 @@ function Scene({ tier, reducedMotion }) {
   );
 }
 
-export default function StoryScene({ tier = 'desktop', reducedMotion = false }) {
+// Reports texture/model loading (drei's loading manager hook) to the HTML loader.
+function LoadProgress({ onProgress }) {
+  const { progress, active } = useProgress();
+  useEffect(() => {
+    onProgress?.(active ? progress : 100);
+  }, [progress, active, onProgress]);
+  return null;
+}
+
+// Mounts only after everything above it in the same Suspense boundary has loaded. Waits for
+// the display fonts (the bottle's artwork is drawn with them), pre-compiles every shader and
+// uploads textures, lets two frames render, then tells the page the scene is ready to reveal.
+function SceneReady({ onReady }) {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  useEffect(() => {
+    let alive = true;
+    const fonts = document.fonts
+      ? Promise.all([document.fonts.load('900 expanded 100px Archivo'), document.fonts.load('700 40px "Plus Jakarta Sans"')])
+      : Promise.resolve();
+    fonts
+      .catch(() => {})
+      .then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
+      .then(() => {
+        if (!alive) return;
+        gl.compile(scene, camera);
+        requestAnimationFrame(() => alive && onReady?.());
+      });
+    return () => { alive = false; };
+  }, [gl, scene, camera, onReady]);
+  return null;
+}
+
+export default function StoryScene({ tier = 'desktop', reducedMotion = false, onProgress, onReady }) {
   const q = QUALITY[tier];
+  const bottle = PACK_KEY === 'bottle';
   return (
     <Canvas
-      camera={{ position: [0, 6, 4], fov: 35 }}
+      // Near/far hug the scene (camera stays 6–20 units out) for depth precision without clipping.
+      camera={{ position: [0, 6, 4], fov: 35, near: 0.5, far: 60 }}
       dpr={q.dpr}
       gl={{ alpha: true, antialias: tier !== 'mobile', powerPreference: 'high-performance' }}
+      // Resize instantly (rotation, window drags) so the aspect never lags behind the canvas.
+      resize={{ scroll: false, debounce: 0 }}
       onCreated={({ gl }) => {
         gl.localClippingEnabled = true;
       }}
       style={{ pointerEvents: 'none' }}
     >
-      <ambientLight intensity={0.25} />
-      <spotLight position={[4, 7, 5]} angle={0.4} penumbra={1} intensity={70} />
-      <pointLight position={[0, 0.3, 0]} color={PACK_KEY === 'bottle' ? '#e8c37e' : ACCENT} intensity={PACK_KEY === 'bottle' ? 1.2 : 3} distance={4} />
-      {PACK_KEY === 'bottle' ? (
-        <Suspense fallback={null}>
-          <BottleStory tier={tier} reducedMotion={reducedMotion} />
-        </Suspense>
+      {bottle ? (
+        // The bottle is lit only by the studio environment: soft reflections and rim light.
+        <BottleStudio />
       ) : (
-        <Scene tier={tier} reducedMotion={reducedMotion} />
+        <>
+          <ambientLight intensity={0.25} />
+          <spotLight position={[4, 7, 5]} angle={0.4} penumbra={1} intensity={70} />
+          <pointLight position={[0, 0.3, 0]} color={ACCENT} intensity={3} distance={4} />
+          <Studio />
+        </>
       )}
-      <FloatingMotes count={PACK_KEY === 'bottle' ? Math.round(q.motes * 0.5) : q.motes} color={PACK_KEY === 'bottle' ? '#e8c37e' : ACCENT} size={PACK_KEY === 'bottle' ? 38 : 55} />
-      <Studio />
-      {q.bloom && (
+      <LoadProgress onProgress={onProgress} />
+      <Suspense fallback={null}>
+        {bottle ? <BottleStory tier={tier} reducedMotion={reducedMotion} /> : <Scene tier={tier} reducedMotion={reducedMotion} />}
+        <FloatingMotes count={bottle ? Math.round(q.motes * 0.5) : q.motes} color={bottle ? '#e8c37e' : ACCENT} size={bottle ? 38 : 55} />
+        <Preload all />
+        <SceneReady onReady={onReady} />
+      </Suspense>
+      {tier !== 'mobile' && (
         <EffectComposer multisampling={0}>
-          {PACK_KEY === 'bottle' ? (
-            // Only the brightest highlights bloom, so the cream reads as rich rather than glowing.
-            <Bloom mipmapBlur luminanceThreshold={0.9} luminanceSmoothing={0.15} intensity={0.45} radius={0.75} />
-          ) : (
-            <Bloom mipmapBlur luminanceThreshold={0.65} luminanceSmoothing={0.2} intensity={0.85} radius={0.7} />
-          )}
+          {q.bloom ? (
+            bottle ? (
+              // Threshold above 1: only the cream ribbon (which renders brighter than white in its
+              // highlights) blooms; the matte bottle, collar and UI-facing surfaces never do.
+              <Bloom mipmapBlur luminanceThreshold={1.0} luminanceSmoothing={0.12} intensity={0.7} radius={0.72} />
+            ) : (
+              <Bloom mipmapBlur luminanceThreshold={0.65} luminanceSmoothing={0.2} intensity={0.85} radius={0.7} />
+            )
+          ) : null}
+          <Vignette offset={0.28} darkness={0.55} eskil={false} />
         </EffectComposer>
       )}
     </Canvas>

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { BOTTLE_BEATS as B, cameraAt, ease, layoutAt, seg, story } from './story';
+import { easing } from 'maath';
+import { BOTTLE_BEATS as B, bottleTurnAt, cameraAt, ease, layoutAt, seg, story } from './story';
 import { placeCamera } from './cameraRig';
 import CreamVortex from './CreamVortex';
 
 const TAU = Math.PI * 2;
-const { damp } = THREE.MathUtils;
 
 // ALXR 500 mL bottle (scene units, centered near the origin). Ergonomic silhouette: full
 // base, a gentle grip waist, broad shoulder and a short neck under a metal collar.
@@ -25,18 +25,32 @@ const CAP = { seat: 1.5, h: 0.48, r: 0.4 };
 const BODY_W = 2048;
 const BODY_H = 1844; // keeps texels square on the body (circumference ≈ 4 units, height ≈ 3.6)
 
+let grain;
+function grainTile() {
+  if (grain) return grain;
+  grain = document.createElement('canvas');
+  grain.width = grain.height = 128;
+  const g = grain.getContext('2d');
+  const img = g.createImageData(128, 128);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.random() * 255;
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+    img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return grain;
+}
+
 function drawBody(ctx) {
   const W = BODY_W, H = BODY_H;
   const bg = ctx.createLinearGradient(0, 0, 0, H);
   bg.addColorStop(0, '#1d2026'); bg.addColorStop(0.55, '#15171c'); bg.addColorStop(1, '#101216');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-  // Fine soft-touch grain
-  const img = ctx.getImageData(0, 0, W, H);
-  for (let i = 0; i < img.data.length; i += 4) {
-    const n = (Math.random() - 0.5) * 7;
-    img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
-  }
-  ctx.putImageData(img, 0, 0);
+  // Fine soft-touch grain: a small noise tile, repeated (cheap, no full-size pixel loop).
+  ctx.fillStyle = ctx.createPattern(grainTile(), 'repeat');
+  ctx.globalAlpha = 0.06;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
 
   const cx = W / 2; // front of the bottle
   // Vertical wordmark, reading bottom to top.
@@ -173,17 +187,22 @@ export default function BottleStory({ tier, reducedMotion }) {
   const spin = useRef();
   const cap = useRef();
   const vortex = useRef({ progress: 0, widen: 0, spin: 1 });
-  const k = useRef({ s: 0, rotY: 0, stage: -1, ny: -2 });
+  const fill = useRef();
+  const rimL = useRef();
+  const rimR = useRef();
+  const k = useRef({ s: 0, stage: -1, ny: -2 });
   const target = useMemo(() => new THREE.Vector3(), []);
 
   useFrame((state, rawDelta) => {
     const d = Math.min(rawDelta, 0.05);
     const t = state.clock.elapsedTime;
     const cur = k.current;
-    const prev = cur.s;
-    cur.s = damp(cur.s, story.s, 5, d);
+
+    // The story position follows the scroll through a critically damped spring (maath's
+    // smooth-damp): everything below trails the scrollbar slightly and eases to rest when
+    // scrolling stops, instead of stopping dead.
+    easing.damp(cur, 's', story.s, reducedMotion ? 0.12 : 0.38, d);
     const s = cur.s;
-    const ds = s - prev;
 
     // --- Beats --------------------------------------------------------------
     const twist = ease.inOut(seg(s, B.twist));
@@ -197,38 +216,57 @@ export default function BottleStory({ tier, reducedMotion }) {
     const shake = Math.max(ease.bell(seg(s, B.popImpact)), ease.bell(seg(s, B.sealImpact)) * 0.8);
 
     // --- Cap: unscrews, lifts clear and hovers above the rising shake, then drops and seals ---
+    // Position eases with damp3; rotations ease per axis. (dampE wraps angles to the shortest
+    // path, which would undo the two-turn unscrew, so the twist axis uses plain damping.)
     const lift = twist * 0.1 + pop * 1.55;
     const bob = reducedMotion ? 0 : Math.sin(t * 1.2) * 0.05 * pop * (1 - drop);
-    cap.current.position.y = CAP.seat + lift * (1 - drop) + bob;
-    cap.current.rotation.y = -twist * 2 * TAU + shut * 2 * TAU;
-    cap.current.rotation.z = pop * 0.18 * (1 - drop);
-    cap.current.rotation.x = pop * -0.1 * (1 - drop);
+    easing.damp3(cap.current.position, [0, CAP.seat + lift * (1 - drop) + bob, 0], 0.12, d);
+    easing.damp(cap.current.rotation, 'y', -twist * 2 * TAU + shut * 2 * TAU, 0.14, d);
+    easing.damp(cap.current.rotation, 'z', pop * 0.18 * (1 - drop), 0.2, d);
+    easing.damp(cap.current.rotation, 'x', pop * -0.1 * (1 - drop), 0.2, d);
 
     // --- Cream vortex -----------------------------------------------------------
     vortex.current.progress = ribbon * (1 - retract);
     vortex.current.widen = widen * (1 - retract);
     vortex.current.spin = reducedMotion ? 0 : 1;
 
-    // --- Rotation: slow turn in the intro, then face the camera; a victory spin to settle ---
+    // --- Rotation: keyframed by story position (front-on at the hero, a victory spin to land
+    // front-on at the end), with a gentle sway so it's never static. ---
     const cam = cameraAt(s, 'bottle');
-    const hold = seg(s, [0.1, 0.3]);
-    cur.rotY += ((reducedMotion ? 0 : d * 0.4) + ds * 1.5) * (1 - hold);
-    if (hold > 0) cur.rotY = damp(cur.rotY, Math.round(cur.rotY / TAU) * TAU + cam.azimuth, 5 * hold, d);
-    spin.current.rotation.y = cur.rotY + settle * TAU;
-    spin.current.position.y = ease.bell(settle) * 0.3;
+    // Absolute, not accumulated: the turn is a function of the (smoothed) story position plus
+    // a small bounded sway, so scrolling up rewinds it exactly and the label returns to face
+    // the viewer at the top. The damping makes the rewind glide instead of snap.
+    const sway = reducedMotion ? 0 : Math.sin(t * 0.55) * 0.14;
+    easing.damp(spin.current.rotation, 'y', bottleTurnAt(s) + sway, 0.35, d);
+    easing.damp(spin.current.position, 'y', ease.bell(settle) * 0.3, 0.12, d);
+
+    // --- Final hero shot: lights come up as the bottle lands beside the checkout card ---
+    const finale = ease.inOut(seg(s, [2.7, 3.0]));
+    fill.current.intensity = finale * 55;
+    rimL.current.intensity = finale * 90;
+    rimR.current.intensity = finale * 70;
+    state.scene.environmentIntensity = 1 + finale * 0.7;
 
     // --- Placement & camera ---------------------------------------------------
+    // Desktop: for the final beat the bottle docks onto the pre-order stage, so it sits
+    // vertically centered beside the card and scrolls away with it (never over the footer).
     const L = layoutAt(tier, s);
-    model.current.scale.setScalar(L.scale);
+    easing.damp3(model.current.scale, L.scale, 0.3, d);
     placeCamera({
       camera, size, tier, layout: L, cam, t, d, target, shake, state: cur,
       targetY: cam.focus * (TOP_Y + 0.2) * L.scale,
+      anchorBlend: tier === 'desktop' ? ease.inOut(seg(s, [2.78, 3.0])) : 0,
     });
   });
 
   return (
     <group ref={model}>
       <GroundShadow y={BASE_Y - 0.01} radius={0.65} />
+      {/* Final-section lighting (off until the bottle lands): a clear frontal fill and two
+          rim lights behind it to cut the matte silhouette out of the dark background. */}
+      <spotLight ref={fill} position={[2.5, 2.5, 7]} angle={0.42} penumbra={0.9} intensity={0} color="#fff6ea" decay={1.2} />
+      <spotLight ref={rimL} position={[-3.2, 2.8, -4.5]} angle={0.5} penumbra={0.8} intensity={0} color="#f1e2c4" decay={1.2} />
+      <spotLight ref={rimR} position={[3.4, 1.8, -4.5]} angle={0.5} penumbra={0.8} intensity={0} color="#dfe7f2" decay={1.2} />
       <group ref={spin}>
         {/* Soft-touch matte body with the vertical ALXR wordmark */}
         <mesh geometry={bodyGeo}>

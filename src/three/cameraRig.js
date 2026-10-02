@@ -9,7 +9,9 @@ const { damp } = THREE.MathUtils;
 //    gap in the page (data-stage); desktop: places it with the layout's lens shift
 //  - `shake` (0..1) adds a short positional jitter for impacts
 //  - `state` is a per-scene ref object ({ stage, ny }) that keeps the docking smooth
-export function placeCamera({ camera, size, tier, layout, cam, targetY, shake = 0, t, d, state, target }) {
+//  - `anchorBlend` (0..1, desktop only) moves the product onto the pre-order stage so it lands
+//    beside the checkout card and scrolls away with it, never over the footer
+export function placeCamera({ camera, size, tier, layout, cam, targetY, shake = 0, t, d, state, target, anchorBlend = 0 }) {
   const aspect = size.width / size.height;
   const compact = tier !== 'desktop' || size.width < 768;
   const pullBack = compact ? 1.05 + Math.max(0, 1 - aspect) * 0.45 : 1;
@@ -41,9 +43,10 @@ export function placeCamera({ camera, size, tier, layout, cam, targetY, shake = 
     const a = Math.abs(state.ny);
     ny = a <= 0.6 ? state.ny : Math.sign(state.ny) * (0.6 + (a - 0.6) * 2);
   } else {
-    const lean = 0.03;
+    const lean = 0.03 * (1 - anchorBlend);
+    state.anchorNy = state.anchorNy === undefined ? story.anchor.ny : damp(state.anchorNy, story.anchor.ny, 16, d);
     nx = layout.nx + story.pointer.x * lean;
-    ny = layout.ny + story.pointer.y * lean;
+    ny = THREE.MathUtils.lerp(layout.ny, state.anchorNy, anchorBlend) + story.pointer.y * lean;
   }
   camera.setViewOffset(size.width, size.height, (-nx * size.width) / 2, (ny * size.height) / 2, size.width, size.height);
   camera.updateProjectionMatrix();

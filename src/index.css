@@ -30,6 +30,17 @@
   html {
     -webkit-font-smoothing: antialiased;
   }
+  /* No rubber-band bounce: overscroll on iOS/Android would yank the scroll position the
+     3D story is driven by. */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+  /* Hold the page still while the 3D scene loads */
+  html.is-loading,
+  html.is-loading body {
+    overflow: hidden;
+  }
   body {
     @apply bg-ink text-white font-sans;
   }
