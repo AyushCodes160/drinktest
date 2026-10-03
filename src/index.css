@@ -5,16 +5,16 @@
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Archivo', 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
 
-  /* ALXR luxury-matte palette */
-  --color-ink: #0b0c10;        /* deep obsidian canvas */
-  --color-ink-2: #121418;      /* matte graphite */
-  --color-ink-3: #1a1d23;
-  --color-line: rgb(255 255 255 / 0.1);
-  --color-muted: #9aa1ad;
-  --color-titanium: #e2e8f0;   /* titanium frost */
-  --color-accent: #e8c37e;     /* raw vanilla / golden cream (CTAs, brand glow) */
-  --color-gold: #d4af37;
-  --color-accent-2: #00f2fe;   /* clean cyan (clinical nutrient stats) */
+  /* ALXR wellness palette: warm oat paper, espresso ink, earthy accents */
+  --color-paper: #fdfbf7;      /* main background */
+  --color-oat: #f5f2ea;        /* secondary surfaces, footer */
+  --color-ink: #2b231d;        /* espresso type */
+  --color-muted: #6e6358;
+  --color-line: rgb(43 35 29 / 0.12);
+  --color-accent: #4a5d23;     /* matcha: buttons, highlights */
+  --color-accent-2: #a9582f;   /* terracotta: nutrient stats */
+  --color-caramel: #d4a373;    /* warm oat/caramel details */
+  --color-matcha-soft: #c9d3b0;
   --color-cream: #e8d9c5;      /* the shake */
 
   --animate-marquee: marquee var(--marquee-duration, 45s) linear infinite;
@@ -42,10 +42,10 @@
     overflow: hidden;
   }
   body {
-    @apply bg-ink text-white font-sans;
+    @apply bg-paper text-ink font-sans;
   }
   ::selection {
-    @apply bg-accent text-ink;
+    @apply bg-accent text-paper;
   }
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-accent;
@@ -53,30 +53,26 @@
 }
 
 @utility glow-accent {
-  box-shadow:
-    0 0 0 1px rgb(232 195 126 / 0.55),
-    0 0 26px -4px rgb(232 195 126 / 0.5),
-    0 0 70px -16px rgb(212 175 55 / 0.55);
+  box-shadow: 0 10px 28px -12px rgb(74 93 35 / 0.55), 0 2px 6px -2px rgb(43 35 29 / 0.15);
 }
 
-/* Keeps white copy crisp when glowing particles pass behind it */
+/* A faint light halo keeps espresso copy crisp if the bottle passes behind it */
 @utility text-legible {
-  text-shadow: 0 2px 18px rgb(0 0 0 / 0.75), 0 0 2px rgb(0 0 0 / 0.5);
+  text-shadow: 0 1px 14px rgb(253 251 247 / 0.9);
 }
 
-/* Frosted obsidian glass for every card that floats over the 3D scene: a faint white
-   frost and hairline border over a dark base, so white copy stays readable when the
-   cream shake swirls behind it. */
+/* Light frosted glass for every card over the scene: soft white, heavy blur, a bright
+   hairline edge and a faint, diffused warm-brown shadow so cards feel tactile. */
 @utility glass {
-  background: linear-gradient(rgb(255 255 255 / 0.03), rgb(255 255 255 / 0.03)), rgb(11 12 16 / 0.62);
-  -webkit-backdrop-filter: blur(40px) saturate(1.15);
-  backdrop-filter: blur(40px) saturate(1.15);
-  border: 1px solid rgb(255 255 255 / 0.1);
-  box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.04);
+  background: rgb(255 255 255 / 0.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid rgb(255 255 255 / 0.4);
+  box-shadow: 0 18px 50px -24px rgb(92 64 40 / 0.22), 0 2px 8px -4px rgb(92 64 40 / 0.08), inset 0 1px 0 rgb(255 255 255 / 0.7);
 
-  /* Phones: denser base, since the bottle sits right behind the cards */
+  /* Phones: a touch more opaque, since the bottle sits right behind the cards */
   @media (max-width: 767px) {
-    background: linear-gradient(rgb(255 255 255 / 0.03), rgb(255 255 255 / 0.03)), rgb(11 12 16 / 0.8);
+    background: rgb(255 255 255 / 0.75);
   }
 }
 
@@ -88,7 +84,7 @@
 
 
 @utility text-gradient {
-  background: linear-gradient(100deg, var(--color-titanium) 25%, var(--color-accent) 70%, var(--color-gold));
+  background: linear-gradient(100deg, var(--color-ink) 20%, var(--color-accent) 62%, var(--color-caramel));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -109,6 +105,23 @@
   }
 }
 
+/* Ambient mesh gradient behind everything */
+.mesh span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+  animation: 52s ease-in-out infinite alternate;
+}
+.mesh-a { width: 62vmax; height: 62vmax; left: -12vmax; top: -18vmax; background: #efe3cf; animation-name: mesh-a !important; }
+.mesh-b { width: 52vmax; height: 52vmax; right: -14vmax; top: 6vmax; background: #dfe6cb; animation-name: mesh-b !important; animation-duration: 46s !important; }
+.mesh-c { width: 48vmax; height: 48vmax; left: 18vmax; bottom: -22vmax; background: #f1dcc2; animation-name: mesh-c !important; animation-duration: 58s !important; }
+.mesh-d { width: 36vmax; height: 36vmax; right: 18vmax; bottom: 8vmax; background: #f8f1e4; animation-name: mesh-a !important; animation-duration: 40s !important; animation-direction: alternate-reverse !important; }
+@keyframes mesh-a { from { transform: translate(0, 0) scale(1); } to { transform: translate(12vmax, 8vmax) scale(1.12); } }
+@keyframes mesh-b { from { transform: translate(0, 0) scale(1.05); } to { transform: translate(-10vmax, 12vmax) scale(0.92); } }
+@keyframes mesh-c { from { transform: translate(0, 0) scale(0.95); } to { transform: translate(8vmax, -10vmax) scale(1.1); } }
+
 @media (prefers-reduced-motion: reduce) {
+  .mesh span { animation: none !important; }
   .animate-marquee, .animate-marquee-reverse { animation: none; }
 }

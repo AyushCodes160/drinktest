@@ -15,12 +15,12 @@ export default function ScrollBand({ words }) {
         {line.map((w, i) => (
           <span key={i} className="flex items-center gap-8">
             {w}
-            <span className="inline-block h-[0.18em] w-[0.18em] rounded-full bg-accent shadow-[0_0_24px_var(--color-accent)]" />
+            <span className="inline-block h-[0.18em] w-[0.18em] rounded-full bg-accent" />
           </span>
         ))}
       </motion.div>
       <motion.div
-        style={{ x: backward, WebkitTextStroke: '1px rgb(255 255 255 / 0.28)' }}
+        style={{ x: backward, WebkitTextStroke: '1px rgb(43 35 29 / 0.22)' }}
         className="mt-2 flex w-max gap-8 text-[13vw] leading-none font-extrabold tracking-[-0.04em] text-transparent md:text-[8vw]"
       >
         {line.map((w, i) => <span key={i}>{w}</span>)}

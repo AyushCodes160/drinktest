@@ -3,7 +3,7 @@ import { story } from './story';
 
 const { damp } = THREE.MathUtils;
 
-// Flies the camera for one frame of the scroll story, shared by the can and bottle scenes.
+// Flies the camera for one frame of the scroll story.
 //  - orbits `targetY` (world units) using the story's camera stop `cam`
 //  - phones/tablets: pulls back by screen shape and docks the product inside the nearest open
 //    gap in the page (data-stage); desktop: places it with the layout's lens shift

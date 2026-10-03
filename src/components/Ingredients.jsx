@@ -16,7 +16,7 @@ export default function Ingredients() {
   return (
     <section id="ingredients" data-story="2" className="relative scroll-mt-20 py-24 md:py-32">
       <div className="mx-auto grid max-w-7xl gap-12 px-5 md:px-8 lg:grid-cols-2 lg:gap-20">
-        {/* Stage for the split can and its glowing formula: this whole column on desktop,
+        {/* Stage for the bottle and its cream vortex: this whole column on desktop,
             an open gap above the panel on phones/tablets. */}
         <div aria-hidden="true" data-stage className="h-[60svh] lg:h-auto" />
 
@@ -43,7 +43,7 @@ export default function Ingredients() {
           >
             {INGREDIENTS.map((ing, i) => (
               <motion.li key={ing.name} variants={item} className="group flex gap-5 py-5 md:gap-7">
-                <span className="pt-1 text-xs font-semibold text-white/30 tabular-nums transition-colors group-hover:text-accent">
+                <span className="pt-1 text-xs font-semibold text-ink/30 tabular-nums transition-colors group-hover:text-accent">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div className="flex-1">
@@ -51,7 +51,7 @@ export default function Ingredients() {
                     <h3 className="text-lg font-semibold md:text-xl">{ing.name}</h3>
                     <span className="shrink-0 font-bold text-accent tabular-nums">{ing.amount}</span>
                   </div>
-                  <p className="mt-1.5 text-sm leading-relaxed text-white/65">{ing.note}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-ink/65">{ing.note}</p>
                 </div>
               </motion.li>
             ))}

@@ -5,10 +5,10 @@ import { BRAND, NAV_LINKS } from '../config';
 
 export function Logo() {
   return (
-    <a href="#top" className="font-wide flex items-center gap-2.5 text-lg font-extrabold tracking-[0.22em] text-titanium">
+    <a href="#top" className="font-wide flex items-center gap-2.5 text-lg font-extrabold tracking-[0.22em] text-ink">
       <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
         <path d="M9 24 L16 8 L23 24" fill="none" stroke="var(--color-accent)" strokeWidth="3.2" strokeLinejoin="round" />
-        <path d="M12.2 18.5h7.6" stroke="var(--color-titanium)" strokeWidth="2.4" />
+        <path d="M12.2 18.5h7.6" stroke="var(--color-ink)" strokeWidth="2.4" />
       </svg>
       {BRAND}
     </a>
@@ -29,16 +29,16 @@ export default function Navbar() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled || open ? 'border-b border-line bg-ink/75 backdrop-blur-xl' : 'border-b border-transparent'
+        scrolled || open ? 'border-b border-line bg-paper/75 backdrop-blur-xl' : 'border-b border-transparent'
       }`}
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 md:h-18 md:px-8" aria-label="Main">
         <Logo />
 
-        <ul className="hidden items-center gap-9 text-sm text-white/70 md:flex">
+        <ul className="hidden items-center gap-9 text-sm text-ink/70 md:flex">
           {NAV_LINKS.map((l) => (
             <li key={l.href}>
-              <a href={l.href} className="transition-colors hover:text-white">{l.label}</a>
+              <a href={l.href} className="transition-colors hover:text-ink">{l.label}</a>
             </li>
           ))}
         </ul>
@@ -63,7 +63,7 @@ export default function Navbar() {
           <ul className="flex flex-col gap-1">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
-                <a href={l.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-3 text-white/80 hover:bg-white/5">
+                <a href={l.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-3 text-ink/80 hover:bg-white/60">
                   {l.label}
                 </a>
               </li>

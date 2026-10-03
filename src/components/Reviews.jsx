@@ -5,15 +5,15 @@ import { REVIEWS } from '../config';
 function ReviewCard({ review }) {
   const initials = review.name.split(' ').map((p) => p[0]).join('');
   return (
-    <figure className="w-[300px] shrink-0 rounded-2xl border border-white/10 bg-black/85 p-6 sm:w-[360px] sm:bg-black/65">
+    <figure className="w-[300px] shrink-0 rounded-2xl border border-ink/10 bg-white/70 p-6 sm:w-[360px] sm:bg-white/70">
       <div className="flex gap-0.5 text-accent" aria-label="5 out of 5 stars">
         {Array.from({ length: 5 }, (_, i) => (
           <Star key={i} size={15} fill="currentColor" strokeWidth={0} />
         ))}
       </div>
-      <blockquote className="mt-4 text-[15px] leading-relaxed text-white/90">“{review.text}”</blockquote>
+      <blockquote className="mt-4 text-[15px] leading-relaxed text-ink/90">“{review.text}”</blockquote>
       <figcaption className="mt-5 flex items-center gap-3">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-accent to-titanium text-xs font-bold text-ink">
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-accent to-caramel text-xs font-bold text-paper">
           {initials}
         </span>
         <span>
@@ -57,7 +57,7 @@ export default function Reviews() {
           <span className="flex gap-0.5 text-accent">
             {Array.from({ length: 5 }, (_, i) => <Star key={i} size={16} fill="currentColor" strokeWidth={0} />)}
           </span>
-          <span><strong className="text-white">4.9 / 5</strong> average from beta testers</span>
+          <span><strong className="text-ink">4.9 / 5</strong> average from beta testers</span>
         </div>
       </div>
 

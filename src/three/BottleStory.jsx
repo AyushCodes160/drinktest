@@ -159,8 +159,8 @@ function GroundShadow({ y, radius }) {
     c.width = c.height = 128;
     const g = c.getContext('2d');
     const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-    grad.addColorStop(0, 'rgba(0,0,0,0.7)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    grad.addColorStop(0, 'rgba(72,52,34,0.32)');
+    grad.addColorStop(1, 'rgba(72,52,34,0)');
     g.fillStyle = grad;
     g.fillRect(0, 0, 128, 128);
     return new THREE.CanvasTexture(c);
@@ -187,9 +187,6 @@ export default function BottleStory({ tier, reducedMotion }) {
   const spin = useRef();
   const cap = useRef();
   const vortex = useRef({ progress: 0, widen: 0, spin: 1 });
-  const fill = useRef();
-  const rimL = useRef();
-  const rimR = useRef();
   const k = useRef({ s: 0, stage: -1, ny: -2 });
   const target = useMemo(() => new THREE.Vector3(), []);
 
@@ -232,20 +229,13 @@ export default function BottleStory({ tier, reducedMotion }) {
 
     // --- Rotation: keyframed by story position (front-on at the hero, a victory spin to land
     // front-on at the end), with a gentle sway so it's never static. ---
-    const cam = cameraAt(s, 'bottle');
+    const cam = cameraAt(s);
     // Absolute, not accumulated: the turn is a function of the (smoothed) story position plus
     // a small bounded sway, so scrolling up rewinds it exactly and the label returns to face
     // the viewer at the top. The damping makes the rewind glide instead of snap.
     const sway = reducedMotion ? 0 : Math.sin(t * 0.55) * 0.14;
     easing.damp(spin.current.rotation, 'y', bottleTurnAt(s) + sway, 0.35, d);
     easing.damp(spin.current.position, 'y', ease.bell(settle) * 0.3, 0.12, d);
-
-    // --- Final hero shot: lights come up as the bottle lands beside the checkout card ---
-    const finale = ease.inOut(seg(s, [2.7, 3.0]));
-    fill.current.intensity = finale * 55;
-    rimL.current.intensity = finale * 90;
-    rimR.current.intensity = finale * 70;
-    state.scene.environmentIntensity = 1 + finale * 0.7;
 
     // --- Placement & camera ---------------------------------------------------
     // Desktop: for the final beat the bottle docks onto the pre-order stage, so it sits
@@ -262,11 +252,6 @@ export default function BottleStory({ tier, reducedMotion }) {
   return (
     <group ref={model}>
       <GroundShadow y={BASE_Y - 0.01} radius={0.65} />
-      {/* Final-section lighting (off until the bottle lands): a clear frontal fill and two
-          rim lights behind it to cut the matte silhouette out of the dark background. */}
-      <spotLight ref={fill} position={[2.5, 2.5, 7]} angle={0.42} penumbra={0.9} intensity={0} color="#fff6ea" decay={1.2} />
-      <spotLight ref={rimL} position={[-3.2, 2.8, -4.5]} angle={0.5} penumbra={0.8} intensity={0} color="#f1e2c4" decay={1.2} />
-      <spotLight ref={rimR} position={[3.4, 1.8, -4.5]} angle={0.5} penumbra={0.8} intensity={0} color="#dfe7f2" decay={1.2} />
       <group ref={spin}>
         {/* Soft-touch matte body with the vertical ALXR wordmark */}
         <mesh geometry={bodyGeo}>

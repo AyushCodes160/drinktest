@@ -4,9 +4,9 @@ const base =
 
 const variants = {
   primary:
-    'bg-accent text-ink glow-accent hover:brightness-110 hover:shadow-[0_0_0_1px_rgb(232_195_126/0.75),0_0_34px_-2px_rgb(232_195_126/0.6),0_0_90px_-10px_rgb(212_175_55/0.6)]',
+    'bg-accent text-paper glow-accent hover:brightness-110 hover:-translate-y-px hover:shadow-[0_14px_34px_-12px_rgb(74_93_35/0.6),0_2px_6px_-2px_rgb(43_35_29/0.18)]',
   outline:
-    'border border-white/20 text-white hover:border-white/60 hover:bg-white/5 backdrop-blur-sm',
+    'border border-ink/15 text-ink hover:border-ink/40 hover:bg-white/60 backdrop-blur-sm',
 };
 
 export default function Button({ as: Tag = 'a', variant = 'primary', className = '', children, ...props }) {

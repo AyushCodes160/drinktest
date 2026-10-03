@@ -18,7 +18,7 @@ const fadeUp = {
 export default function Hero() {
   const sectionRef = useRef(null);
 
-  // Copy drifts up and fades as the hero scrolls away (the can itself lives in the story layer).
+  // Copy drifts up and fades as the hero scrolls away (the bottle itself lives in the story layer).
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] });
   const copyY = useTransform(scrollYProgress, [0, 1], [0, -140]);
   const copyOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
@@ -33,7 +33,7 @@ export default function Hero() {
         <motion.div style={{ y: copyY, opacity: copyOpacity }} className="text-legible relative z-10 text-center lg:text-left">
           <motion.p
             variants={fadeUp} initial="hidden" animate="show" custom={0}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium tracking-wide text-white/80 backdrop-blur"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white/60 px-4 py-1.5 text-xs font-medium tracking-wide text-ink/80 backdrop-blur"
           >
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
             {DESCRIPTOR} · Pre-orders open

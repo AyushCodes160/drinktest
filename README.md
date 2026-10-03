@@ -1,6 +1,7 @@
-# OMNIA landing page
+# ALXR landing page
 
-React 19 · Tailwind CSS v4 · Framer Motion · React Three Fiber + drei · Lucide icons.
+Scroll-driven 3D landing page for ALXR, all-in-one liquid nutrition.
+React 19 · Tailwind CSS v4 · Framer Motion · React Three Fiber + drei · postprocessing · Lenis.
 
 ```bash
 npm install
@@ -9,12 +10,12 @@ npm run build    # production build in dist/
 ```
 
 ## Customize
-- **Brand name, photos, ingredients, reviews:** `src/config.js`
-- **Colors & font:** `@theme` block in `src/index.css` (`--color-accent` is the neon CTA color)
-- **3D models:** `src/three/products.jsx` (bottle, textured can, generated GLB); lighting in `src/three/Studio.jsx`
-- **Scroll story:** sections marked `data-story="0..3"` are the waypoints. `BEATS` (crack, lift, erupt, suck, slam, spin), the `CAMERA` path and per-device `LAYOUTS` live in `src/three/story.js`; `src/three/StoryScene.jsx` runs it. The liquid is `src/three/ViscousFluid.jsx` (noise-shader column + metaballs) with shaders in `src/three/FluidMaterial.js`
-- **Lid artwork:** `public/textures/lid-top.jpg` (top-down photo, tab painted out) and `public/textures/lid-tab.png` (the tab cut-out)
-- **Waitlist form:** replace `joinWaitlist()` in `src/components/FinalCTA.jsx` with your email provider
+- **Brand, copy, ingredients, reviews, pre-order packs:** `src/config.js`
+- **Palette & type:** `@theme` block in `src/index.css` (obsidian/graphite canvas, Titanium Frost, golden-cream `--color-accent`, cyan `--color-accent-2` for nutrient stats; Archivo for display)
+- **Bottle:** `src/three/BottleStory.jsx` (silhouette, soft-touch material, collar, ridged cap, wordmark texture drawn at runtime); lighting in `src/three/Studio.jsx`
+- **Cream vortex:** `src/three/CreamVortex.jsx` (ribbon paths and the cream shader)
+- **Scroll story:** sections marked `data-story="0..3"` are the waypoints. `BOTTLE_BEATS` (twist, pop, ribbon, widen, retract, drop, shut, settle), the camera path, the bottle's turn and per-device `LAYOUTS` live in `src/three/story.js`. On phones/tablets the bottle docks into the page's open gaps (`data-stage`); on desktop it lands beside the pre-order card.
+- **Pre-order form:** replace `submitPreorder()` in `src/components/FinalCTA.jsx` with your checkout or email provider
 
 ## Before launch
 - Testimonials in `config.js` are placeholders; replace them with real, attributable reviews.
@@ -26,4 +27,3 @@ It's a static site: `npm run build` outputs plain files to `dist/`.
 
 **Vercel:** import this repo at vercel.com/new. It auto-detects Vite (build `npm run build`, output `dist`).
 **Netlify:** import the repo; build command `npm run build`, publish directory `dist`.
-**GitHub Pages:** set `base: '/drinktest/'` in `vite.config.js`, then publish `dist/` (e.g. with the `gh-pages` package).

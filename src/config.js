@@ -4,19 +4,6 @@ export const BRAND = 'ALXR';
 export const TAGLINE = ['Total Sustenance.', 'Pure Velocity.'];
 export const DESCRIPTOR = 'All-In-One Liquid Nutrition';
 
-// Which 3D product the hero shows:
-//   'bottle'       – procedural OMNIA bottle (brand-safe default)
-//   'textured-can' – product photo wrapped on a 3D can (public/textures/can-front.jpg)
-//   'generated'    – mesh generated from the photo by TripoSR (public/models/monster-can.glb)
-// The can photo and generated model use Monster Energy's trademarked design:
-// local prototyping only — switch back to 'bottle' before deploying or sharing.
-export const HERO_MODEL = 'textured-can';
-
-// Which pack the scroll story uses: 'bottle' (500 mL ALXR shake bottle, cap twists off and
-// the shake ribbons out of the neck) or 'can' (the can story above, split in half).
-// Override in the browser with ?pack=can or ?pack=bottle.
-export const PACK = 'bottle';
-
 // Unsplash photo IDs (images.unsplash.com/photo-<id>). source.unsplash.com was retired,
 // so we reference specific photos and let Unsplash's CDN resize them.
 export const PHOTOS = {

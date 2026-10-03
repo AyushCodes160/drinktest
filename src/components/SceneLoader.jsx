@@ -36,7 +36,7 @@ export default function SceneLoader({ visible, progress }) {
           key="loader"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
-          className="fixed inset-0 z-[90] grid place-items-center bg-ink"
+          className="fixed inset-0 z-[90] grid place-items-center bg-paper"
           role="status"
           aria-live="polite"
           aria-label={`Loading ${BRAND}, ${Math.round(shown)} percent`}
@@ -45,16 +45,16 @@ export default function SceneLoader({ visible, progress }) {
             <motion.div
               animate={reduce ? undefined : { opacity: [0.55, 1, 0.55], scale: [0.98, 1, 0.98] }}
               transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-              className="font-wide flex items-center gap-3 text-2xl font-extrabold tracking-[0.3em] text-titanium"
+              className="font-wide flex items-center gap-3 text-2xl font-extrabold tracking-[0.3em] text-ink"
             >
               <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
                 <path d="M9 24 L16 8 L23 24" fill="none" stroke="var(--color-accent)" strokeWidth="3.2" strokeLinejoin="round" />
-                <path d="M12.2 18.5h7.6" stroke="var(--color-titanium)" strokeWidth="2.4" />
+                <path d="M12.2 18.5h7.6" stroke="var(--color-ink)" strokeWidth="2.4" />
               </svg>
               {BRAND}
             </motion.div>
-            <div className="h-px w-48 overflow-hidden bg-white/10">
-              <div className="h-full bg-gradient-to-r from-gold to-accent transition-[width] duration-150" style={{ width: `${shown}%` }} />
+            <div className="h-px w-48 overflow-hidden bg-ink/10">
+              <div className="h-full bg-gradient-to-r from-caramel to-accent transition-[width] duration-150" style={{ width: `${shown}%` }} />
             </div>
             <span className="font-wide text-xs tracking-[0.3em] text-muted tabular-nums">{String(Math.round(shown)).padStart(3, '0')}</span>
           </div>

@@ -19,7 +19,7 @@ export default function App() {
   return (
     // "user" respects the OS reduced-motion setting for every Framer Motion animation.
     <MotionConfig reducedMotion="user">
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-ink">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-full focus:bg-accent focus:px-4 focus:py-2 focus:text-paper">
         Skip to content
       </a>
       <StoryLayer />
